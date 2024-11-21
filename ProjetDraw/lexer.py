@@ -1,0 +1,109 @@
+# lexer.py
+import re
+from utils.tokens import Token, TokenType
+
+class Lexer:
+    def __init__(self, source_code):
+        self.source_code = source_code  # Le code source à analyser
+        self.tokens = []  # Liste pour stocker les tokens générés
+    
+    def tokenize(self):
+        # Mots-clés et symboles spécifiques associés à leurs types
+        patterns = {
+            "cursor": TokenType.CURSOR,
+            "setPosition": TokenType.SET_POSITION,
+            "setColor": TokenType.SET_COLOR,
+            "setThickness": TokenType.SET_THICKNESS,
+            "move": TokenType.MOVE,
+            "rotate": TokenType.ROTATE,
+            "drawLine": TokenType.DRAW_LINE,
+            "drawSquare": TokenType.DRAW_SQUARE,
+            "drawCircle": TokenType.DRAW_CIRCLE,
+            "drawPoint": TokenType.DRAW_POINT,
+            "drawArc": TokenType.DRAW_ARC,
+            "animate": TokenType.ANIMATE,
+            "if": TokenType.IF,
+            "else": TokenType.ELSE,
+            "for": TokenType.FOR,
+            "while": TokenType.WHILE,
+            "block": TokenType.BLOCK,
+            "function": TokenType.FUNCTION,
+            "repeat": TokenType.REPEAT,
+            "++": TokenType.PLUS_PLUS,
+            "--": TokenType.MINUS_MINUS,
+            "int": TokenType.INT,
+            "float": TokenType.FLOAT,
+        }
+        
+        # Expressions régulières pour détecter les différents types de tokens
+        token_specs = [
+            ("PLUS_PLUS", r'\+\+'),
+             ("MINUS_MINUS", r'--'), 
+            ("NUMBER", r'-?\d+(\.\d*)?'),          # Nombres (entiers, flottants, et négatifs)
+            ("IDENTIFIER", r'[a-zA-Z_]\w*'),       # Identifiants et mots-clés (noms de variables et curseurs)
+            ("SYMBOL", r'[;(),{}=.<>!]'),           # Symboles spécifiques ponctuels
+            ("SKIP", r'[ \t]+'),                   # Ignore les espaces et tabulations
+            ("NEWLINE", r'\n'),                    # Ignore les nouvelles lignes
+        ]
+        
+        # Compilation de l'expression régulière unique
+        token_regex = '|'.join(f'(?P<{name}>{pattern})' for name, pattern in token_specs)
+        get_token = re.compile(token_regex).match
+
+        # Initialisation de la position
+        pos = 0
+        length = len(self.source_code)
+
+        # Boucle de tokenisation avec vérification caractère par caractère
+        while pos < length:
+            match = get_token(self.source_code, pos)
+            if match:
+                kind = match.lastgroup
+                value = match.group(kind)
+
+                if kind == "NUMBER":
+                    token_type = TokenType.NUMBER
+                elif kind == "PLUS_PLUS":
+                    token_type = TokenType.PLUS_PLUS  # Reconnaît ++ comme un seul token
+                elif kind in ("PLUS_PLUS", "MINUS_MINUS", "MINUS"):
+                    token_type = TokenType[kind]  # Associe directement le type du token
+
+                elif kind == "IDENTIFIER" and value in patterns:
+                    token_type = patterns[value]  # Mot-clé ou symbole spécifique
+                elif kind == "IDENTIFIER":
+                    token_type = TokenType.IDENTIFIER  # Identifiant utilisateur
+                elif kind == "SYMBOL":
+                    symbol_types = {
+                        ";": TokenType.SEMICOLON,
+                        "(": TokenType.LPAREN,
+                        ")": TokenType.RPAREN,
+                        "{": TokenType.LBRACE,
+                        "}": TokenType.RBRACE,
+                        ",": TokenType.COMMA,
+                        "=": TokenType.ASSIGN,
+                        "==": TokenType.EQUAL,
+                        "!=": TokenType.NOT_EQUAL,
+                        ".": TokenType.DOT,
+                        "<": TokenType.LESS_THAN,
+                        ">": TokenType.GREATER_THAN,
+                        "<=": TokenType.LESS_EQUAL,
+                        ">=": TokenType.GREATER_EQUAL
+                    }
+                    token_type = symbol_types.get(value)
+                    if token_type is None:
+                        raise SyntaxError(f"Unknown symbol '{value}' at position {pos}")
+            
+                elif kind in ("SKIP", "NEWLINE"):
+                    pos = match.end()
+                    continue  # Ignore les espaces, tabulations et nouvelles lignes
+                else:
+                    raise SyntaxError(f"Unknown token '{value}' at position {pos}")
+
+                # Ajouter le token généré
+                self.tokens.append(Token(token_type, value))
+                pos = match.end()
+            else:
+                # Aucun motif ne correspond, caractère inconnu
+                raise SyntaxError(f"Unknown token '{self.source_code[pos]}' at position {pos}")
+
+        return self.tokens
