@@ -15,6 +15,7 @@ class TokenType(Enum):
     DRAW_ARC = "DRAW_ARC"
     ANIMATE = "ANIMATE"
     
+    
     # Structures de contrôle
     IF = "IF"
     ELSE = "ELSE"
@@ -41,6 +42,13 @@ class TokenType(Enum):
     GREATER_EQUAL = "GREATER_EQUAL"
     PLUS_PLUS = "PLUS_PLUS"
     MINUS_MINUS = "MINUS_MINUS"
+
+    # Nouveaux opérateurs arithmétiques
+    PLUS = "PLUS"            # +
+    MINUS = "MINUS"          # -
+    MULTIPLY = "MULTIPLY"    # *
+    DIVIDE = "DIVIDE"        # /
+    MODULO = "MODULO"        # %
     
     # Symboles
     LPAREN = "LPAREN"

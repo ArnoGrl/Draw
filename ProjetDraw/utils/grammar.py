@@ -34,6 +34,35 @@ grammar = {
         ]
     },
     
+
+    "expression": {
+        "description": "Une expression qui peut être une valeur, une opération mathématique, ou une combinaison.",
+        "rule": [
+            "valeur",  # Une valeur seule
+            "expression", "operateur_arithmetique", "expression"  # Une opération entre deux expressions
+        ]
+    },
+
+    "operateur_arithmetique": {
+        "description": "Opérateur arithmétique utilisé dans les calculs.",
+        "rule": ["'+'", "'-'", "'*'", "'/'", "'%'"]
+    },
+
+    "affectation_variable": {
+        "description": "Affecte une valeur ou une expression à une variable existante.",
+        "rule": ["identifiant", "'='", "expression", "';'"]
+    },
+
+    "condition": {
+        "description": "Condition pour une instruction conditionnelle.",
+        "rule": ["expression", "operateur_conditionnel", "expression"]
+    },
+
+    "valeur": {
+        "description": "Valeur pouvant être un entier, un flottant, ou une expression.",
+        "rule": ["entier", "flottant", "identifiant", "expression"]
+    },
+    
     "declaration_curseur": {
         "description": "Déclaration d'un curseur avec un nom spécifique.",
         "rule": ["'cursor'", "identifiant", "';'"]
@@ -121,20 +150,19 @@ grammar = {
     },
     
     "boucle_for": {
-    "description": "Boucle for pour répéter des instructions un nombre fixe de fois.",
-    "rule": [
-        "'for'", "'('", "'int'", "identifiant", "'='", "entier", "';'",
-        "condition", "';'",
-        "identifiant", ["'++'", "'--'"], "')'", "'{'", "instructions", "'}'"
-    ]
+        "description": "Boucle for avec des opérations arithmétiques.",
+        "rule": [
+            "'for'", "'('", "'int'", "identifiant", "'='", "expression", "';'",
+            "condition", "';'",
+            "identifiant", ["'++'", "'--'", "'+='", "'-='"], "')'", "'{'", "instructions", "'}'"
+        ]
     },
 
-    
     "boucle_while": {
         "description": "Boucle while pour répéter des instructions tant qu'une condition est vraie.",
         "rule": ["'while'", "'('", "condition", "')'", "'{'", "instructions", "'}'"]
     },
-    
+
     "bloc_instructions": {
         "description": "Bloc d'instructions pour regrouper plusieurs commandes.",
         "rule": ["'block'", "identifiant", "'{'", "instructions", "'}'"]

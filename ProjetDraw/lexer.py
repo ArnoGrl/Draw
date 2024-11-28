@@ -37,13 +37,18 @@ class Lexer:
         
         # Expressions régulières pour détecter les différents types de tokens
         token_specs = [
-            ("PLUS_PLUS", r'\+\+'),
-             ("MINUS_MINUS", r'--'), 
-            ("NUMBER", r'-?\d+(\.\d*)?'),          # Nombres (entiers, flottants, et négatifs)
-            ("IDENTIFIER", r'[a-zA-Z_]\w*'),       # Identifiants et mots-clés (noms de variables et curseurs)
-            ("SYMBOL", r'[;(),{}=.<>!]'),           # Symboles spécifiques ponctuels
-            ("SKIP", r'[ \t]+'),                   # Ignore les espaces et tabulations
-            ("NEWLINE", r'\n'),                    # Ignore les nouvelles lignes
+            ("PLUS_PLUS", r'\+\+'),               # ++
+            ("MINUS_MINUS", r'--'),              # --
+            ("PLUS", r'\+'),                     # +
+            ("MINUS", r'-'),                     # -
+            ("MULTIPLY", r'\*'),                 # *
+            ("DIVIDE", r'/'),                    # /
+            ("MODULO", r'%'),                    # %
+            ("NUMBER", r'-?\d+(\.\d*)?'),        # Nombres (entiers, flottants, et négatifs)
+            ("IDENTIFIER", r'[a-zA-Z_]\w*'),     # Identifiants et mots-clés
+            ("SYMBOL", r'[;(),{}=.<>!]'),        # Symboles spécifiques ponctuels
+            ("SKIP", r'[ \t]+'),                 # Ignore les espaces et tabulations
+            ("NEWLINE", r'\n'),                  # Ignore les nouvelles lignes
         ]
         
         # Compilation de l'expression régulière unique
@@ -63,15 +68,16 @@ class Lexer:
 
                 if kind == "NUMBER":
                     token_type = TokenType.NUMBER
-                elif kind == "PLUS_PLUS":
-                    token_type = TokenType.PLUS_PLUS  # Reconnaît ++ comme un seul token
-                elif kind in ("PLUS_PLUS", "MINUS_MINUS", "MINUS"):
-                    token_type = TokenType[kind]  # Associe directement le type du token
+                elif kind in ("PLUS_PLUS", "MINUS_MINUS", "PLUS", "MINUS", "MULTIPLY", "DIVIDE", "MODULO"):
+                    token_type = TokenType[kind]
 
                 elif kind == "IDENTIFIER" and value in patterns:
                     token_type = patterns[value]  # Mot-clé ou symbole spécifique
                 elif kind == "IDENTIFIER":
-                    token_type = TokenType.IDENTIFIER  # Identifiant utilisateur
+                    if value in patterns:
+                        token_type = patterns[value]  # Mot-clé ou symbole spécifique
+                    else:
+                        token_type = TokenType.IDENTIFIER  # Identifiant utilisateur
                 elif kind == "SYMBOL":
                     symbol_types = {
                         ";": TokenType.SEMICOLON,
