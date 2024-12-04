@@ -13,6 +13,8 @@ class Parser:
         
         while self.position < len(self.tokens):
             current_token = self.tokens[self.position]
+            print(f"Current token at position {self.position}/{len(self.tokens)}: {current_token}")
+
             
             if current_token.type == TokenType.CURSOR:
                 syntax_tree.append(self.parse_cursor_declaration())
@@ -26,6 +28,11 @@ class Parser:
                 syntax_tree.append(self.parse_while_loop())
             elif current_token.type in (TokenType.INT, TokenType.FLOAT):
                 syntax_tree.append(self.parse_variable_declaration())
+            elif current_token.type == TokenType.LBRACE:  # Détecte un bloc
+                syntax_tree.append(self.parse_block())
+            elif current_token.type == TokenType.RBRACE:  # Ignore si trouvé en dehors de parse_block
+                print(f"Ignored unexpected 'RBRACE' at position {self.position}")
+                self.position += 1  # Consomme le 'RBRACE'
             else:
                 raise SyntaxError(f"Unexpected token {current_token.type} at position {self.position}")
         
@@ -82,7 +89,6 @@ class Parser:
             return self.parse_animate(cursor_name)
         else:
             raise SyntaxError(f"Unexpected cursor method {method_token} at position {self.position}")
-
 
         
     def parse_set_position(self, cursor_name):
@@ -258,15 +264,35 @@ class Parser:
         return {"type": "VARIABLE_UPDATE", "name": var_name, "operator": update_op}
 
     def parse_block(self):
-        # Analyse d'un bloc d'instructions
+        self.expect(TokenType.LBRACE)  # Vérifie l'ouverture du bloc
+        print(f"Entering block at position {self.position - 1}, token: {self.tokens[self.position - 1]}")  # Débogage
         statements = []
-        while not self.match(TokenType.RBRACE):
-            statements.append(self.parse())
-        return statements
+        
+        # Continue jusqu'à trouver '}' ou jusqu'à la fin des tokens
+        while self.position < len(self.tokens) and not self.match(TokenType.RBRACE):
+            print(f"Parsing statement inside block at position {self.position}, token: {self.tokens[self.position]}")  # Débogage
+            parsed_statement = self.parse()
+            if isinstance(parsed_statement, list):
+                statements.extend(parsed_statement)  # Ajoute directement les éléments de la liste
+            else:
+                statements.append(parsed_statement)  # Ajoute une seule instruction
+
+        # Une fois sorti de la boucle, le token doit être '}'
+        if self.match(TokenType.RBRACE):
+            print(f"Expecting RBRACE at position {self.position}, token: {self.tokens[self.position]}")  # Débogage
+            self.expect(TokenType.RBRACE)  # Consomme le '}' pour clôturer le bloc
+
+        print(f"Exiting block at position {self.position}")  # Débogage
+        return {"type": "BLOCK", "statements": statements}
+
+
+
+
 
     def expect(self, *token_types):
         if self.position < len(self.tokens) and self.tokens[self.position].type in token_types:
             current_token = self.tokens[self.position]
+            print(f"Consuming token at position {self.position}: {current_token}")
             self.position += 1
             return current_token
         else:
@@ -275,9 +301,11 @@ class Parser:
             raise SyntaxError(f"Expected {token_types} at position {self.position}")
 
     def match(self, *token_types):
-        # Vérifie si le token courant correspond à l'un des types spécifiés sans avancer
-        if self.position < len(self.tokens) and self.tokens[self.position].type in token_types:
-            return True
+        # Débogage : Vérification des tokens et des types attendus
+        if self.position < len(self.tokens):
+            current_token = self.tokens[self.position]
+            print(f"Matching token at position {self.position}: {current_token} against {token_types}")
+            return current_token.type in token_types
+        print(f"Position {self.position} is out of range for matching token types: {token_types}")
         return False
-
 
