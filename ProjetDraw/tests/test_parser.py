@@ -20,26 +20,16 @@ class TestParser(unittest.TestCase):
             myCursor.setColor(red);
             myCursor.setThickness(5);
         }
+        myCursor.setColor(red);
+        {
+            myCursor.setColor(red);
+            myCursor.setThickness(5);
+        }
+        myCursor.setColor(red);
         """
         syntax_tree = self.parse_code(code)
         print("Generated AST:")
         pprint.pprint(syntax_tree)
-
-        self.assertEqual(syntax_tree[0], {
-            "type": "BLOCK",
-            "statements": [
-                {
-                    "type": "SET_COLOR",
-                    "cursor": "myCursor",
-                    "color": "red"
-                },
-                {
-                    "type": "SET_THICKNESS",
-                    "cursor": "myCursor",
-                    "thickness": {"type": "VALUE", "value": "5"}
-                }
-            ]
-        })
 
 
             

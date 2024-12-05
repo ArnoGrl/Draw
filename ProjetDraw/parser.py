@@ -10,12 +10,11 @@ class Parser:
     
     def parse(self):
         syntax_tree = []  # Liste pour stocker les nœuds syntaxiques
-        
+
         while self.position < len(self.tokens):
             current_token = self.tokens[self.position]
             print(f"Current token at position {self.position}/{len(self.tokens)}: {current_token}")
 
-            
             if current_token.type == TokenType.CURSOR:
                 syntax_tree.append(self.parse_cursor_declaration())
             elif current_token.type == TokenType.IDENTIFIER:
@@ -30,12 +29,13 @@ class Parser:
                 syntax_tree.append(self.parse_variable_declaration())
             elif current_token.type == TokenType.LBRACE:  # Détecte un bloc
                 syntax_tree.append(self.parse_block())
-            elif current_token.type == TokenType.RBRACE:  # Ignore si trouvé en dehors de parse_block
-                print(f"Ignored unexpected 'RBRACE' at position {self.position}")
-                self.position += 1  # Consomme le 'RBRACE'
+            elif current_token.type == TokenType.RBRACE:  # Détecte une accolade fermante
+                # Passe l'accolade fermante à parse_block pour gérer la fin du bloc
+                print(f"Detected RBRACE at position {self.position}")
+                break  # On ne veut pas que parse analyse cela directement, c'est pour parse_block
             else:
                 raise SyntaxError(f"Unexpected token {current_token.type} at position {self.position}")
-        
+
         return syntax_tree
 
     def parse_cursor_declaration(self):
@@ -264,41 +264,41 @@ class Parser:
         return {"type": "VARIABLE_UPDATE", "name": var_name, "operator": update_op}
 
     def parse_block(self):
-        self.expect(TokenType.LBRACE)  # Vérifie l'ouverture du bloc
-        print(f"Entering block at position {self.position - 1}, token: {self.tokens[self.position - 1]}")  # Débogage
+        self.expect(TokenType.LBRACE)  # Vérifie et consomme l'ouverture du bloc
+        print(f"Entering block at position {self.position - 1}, token: {self.tokens[self.position - 1]}")
+
         statements = []
-        
-        # Continue jusqu'à trouver '}' ou jusqu'à la fin des tokens
-        while self.position < len(self.tokens) and not self.match(TokenType.RBRACE):
-            print(f"Parsing statement inside block at position {self.position}, token: {self.tokens[self.position]}")  # Débogage
-            parsed_statement = self.parse()
-            if isinstance(parsed_statement, list):
-                statements.extend(parsed_statement)  # Ajoute directement les éléments de la liste
-            else:
-                statements.append(parsed_statement)  # Ajoute une seule instruction
 
-        # Une fois sorti de la boucle, le token doit être '}'
-        if self.match(TokenType.RBRACE):
-            print(f"Expecting RBRACE at position {self.position}, token: {self.tokens[self.position]}")  # Débogage
-            self.expect(TokenType.RBRACE)  # Consomme le '}' pour clôturer le bloc
+        while True:
+            if self.match(TokenType.RBRACE):  # Détecte l'accolade fermante
+                print(f"Expecting RBRACE at position {self.position}, token: {self.tokens[self.position]}")
+                self.expect(TokenType.RBRACE)  # Consomme l'accolade fermante
+                break  # Terminer le bloc
+            if self.position >= len(self.tokens):  # Si la fin des tokens est atteinte
+                raise SyntaxError("Unexpected end of input. Missing closing '}' for block.")
 
-        print(f"Exiting block at position {self.position}")  # Débogage
+            print(f"Parsing statement inside block at position {self.position}, token: {self.tokens[self.position]}")
+            statements.append(self.parse())  # Appelle parse pour analyser les instructions internes
+
+        print(f"Exiting block at position {self.position}")
         return {"type": "BLOCK", "statements": statements}
 
 
-
-
-
     def expect(self, *token_types):
-        if self.position < len(self.tokens) and self.tokens[self.position].type in token_types:
-            current_token = self.tokens[self.position]
+        if self.position >= len(self.tokens):  # Vérifie explicitement si la position dépasse la longueur des tokens
+            print(f"Error: Reached end of tokens at position {self.position}, expected {token_types}")
+            raise SyntaxError(f"Unexpected end of input, expected {token_types}")
+
+        current_token = self.tokens[self.position]
+        if current_token.type in token_types:
             print(f"Consuming token at position {self.position}: {current_token}")
             self.position += 1
             return current_token
         else:
-            # Ajout de debug
-            print(f"Error at position {self.position}: expected {token_types}, found {self.tokens[self.position]}")
-            raise SyntaxError(f"Expected {token_types} at position {self.position}")
+            # Ajout de débogage : Affiche ce qui était attendu et ce qui a été trouvé
+            print(f"Error at position {self.position}: expected {token_types}, found {current_token}")
+            raise SyntaxError(f"Expected {token_types} at position {self.position}, but found {current_token.type}")
+
 
     def match(self, *token_types):
         # Débogage : Vérification des tokens et des types attendus
