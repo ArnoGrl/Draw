@@ -16,16 +16,16 @@ class TestParser(unittest.TestCase):
     
     def test_block_with_two_statements(self):
         code = """
-        {
+
+        int i = 5;
+        if(i < 5){
             myCursor.setColor(red);
-            myCursor.setThickness(5);
+            myCursor.drawLine(10);
         }
-        myCursor.setColor(red);
-        {
-            myCursor.setColor(red);
-            myCursor.setThickness(5);
+        else{
+            myCursor.setColor(blue);
         }
-        myCursor.setColor(red);
+
         """
         syntax_tree = self.parse_code(code)
         print("Generated AST:")

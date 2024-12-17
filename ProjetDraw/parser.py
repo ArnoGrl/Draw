@@ -18,7 +18,10 @@ class Parser:
             if current_token.type == TokenType.CURSOR:
                 syntax_tree.append(self.parse_cursor_declaration())
             elif current_token.type == TokenType.IDENTIFIER:
-                syntax_tree.append(self.parse_cursor_method())
+                if self.position + 1 < len(self.tokens) and self.tokens[self.position + 1].type in {TokenType.MINUS_MINUS, TokenType.PLUS_PLUS}:
+                    syntax_tree.append(self.parse_variable_update())
+                else:
+                    syntax_tree.append(self.parse_cursor_method())
             elif current_token.type == TokenType.IF:
                 syntax_tree.append(self.parse_if_statement())
             elif current_token.type == TokenType.FOR:
@@ -182,16 +185,13 @@ class Parser:
         self.expect(TokenType.LPAREN)
         condition = self.parse_condition()
         self.expect(TokenType.RPAREN)
-        self.expect(TokenType.LBRACE)
         true_block = self.parse_block()
-        self.expect(TokenType.RBRACE)
 
         # Gère le bloc 'else' optionnel
         false_block = None
         if self.match(TokenType.ELSE):
-            self.expect(TokenType.LBRACE)
+            self.expect(TokenType.ELSE)
             false_block = self.parse_block()
-            self.expect(TokenType.RBRACE)
 
         return {"type": "IF_STATEMENT", "condition": condition, "true_block": true_block, "false_block": false_block}
 
@@ -211,14 +211,11 @@ class Parser:
         self.expect(TokenType.FOR)
         self.expect(TokenType.LPAREN)
         init = self.parse_variable_declaration()
-        self.expect(TokenType.SEMICOLON)
         condition = self.parse_condition()
         self.expect(TokenType.SEMICOLON)
         update = self.parse_variable_update()
         self.expect(TokenType.RPAREN)
-        self.expect(TokenType.LBRACE)
         body = self.parse_block()
-        self.expect(TokenType.RBRACE)
         return {"type": "FOR_LOOP", "init": init, "condition": condition, "update": update, "body": body}
 
     def parse_expression(self):
@@ -255,6 +252,7 @@ class Parser:
         var_name = self.expect(TokenType.IDENTIFIER).value
         self.expect(TokenType.ASSIGN)
         var_value = self.expect(TokenType.NUMBER).value
+        self.expect(TokenType.SEMICOLON)
         return {"type": "VARIABLE_DECLARATION", "var_type": var_type, "name": var_name, "value": var_value}
 
     def parse_variable_update(self):
