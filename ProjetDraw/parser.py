@@ -18,7 +18,7 @@ class Parser:
             if current_token.type == TokenType.CURSOR:
                 syntax_tree.append(self.parse_cursor_declaration())
             elif current_token.type == TokenType.IDENTIFIER:
-                if self.position + 1 < len(self.tokens) and self.tokens[self.position + 1].type in {TokenType.MINUS_MINUS, TokenType.PLUS_PLUS}:
+                if self.position + 1 < len(self.tokens) and self.tokens[self.position + 1].type in {TokenType.MINUS_MINUS, TokenType.PLUS_PLUS, TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL}:
                     syntax_tree.append(self.parse_variable_update())
                 else:
                     syntax_tree.append(self.parse_cursor_method())
@@ -201,9 +201,7 @@ class Parser:
         self.expect(TokenType.LPAREN)
         condition = self.parse_condition()
         self.expect(TokenType.RPAREN)
-        self.expect(TokenType.LBRACE)
         body = self.parse_block()
-        self.expect(TokenType.RBRACE)
         return {"type": "WHILE_LOOP", "condition": condition, "body": body}
 
     def parse_for_loop(self):
@@ -237,9 +235,9 @@ class Parser:
     def parse_condition(self):
         print(f"Parsing condition at position {self.position}, token: {self.tokens[self.position]}")
         left_expr = self.parse_expression()  # Analyser une expression complexe à gauche
-        operator = self.expect(TokenType.GREATER_THAN, TokenType.LESS_THAN, 
-                            TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL,
-                            TokenType.EQUAL, TokenType.NOT_EQUAL).type
+        operator = self.expect(TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL,
+                            TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.LESS_THAN, TokenType.GREATER_THAN 
+                            ).type
         right_expr = self.parse_expression()  # Analyser une expression complexe à droite
         return {"left": left_expr, "operator": operator, "right": right_expr}
 
@@ -256,10 +254,33 @@ class Parser:
         return {"type": "VARIABLE_DECLARATION", "var_type": var_type, "name": var_name, "value": var_value}
 
     def parse_variable_update(self):
-        # Analyse pour la mise à jour d'une variable (par exemple, identifiant++)
+        # Analyse pour la mise à jour d'une variable (par exemple, i++, i--, i += 2, i -= 2)
         var_name = self.expect(TokenType.IDENTIFIER).value
-        update_op = self.expect(TokenType.PLUS_PLUS, TokenType.MINUS_MINUS).type  # Opérateur ++ ou --
-        return {"type": "VARIABLE_UPDATE", "name": var_name, "operator": update_op}
+        
+        # Vérifie si l'opérateur est de type ++, --, += ou -=
+        update_op = self.expect(
+            TokenType.PLUS_PLUS, 
+            TokenType.MINUS_MINUS, 
+            TokenType.PLUS_EQUAL, 
+            TokenType.MINUS_EQUAL
+        ).type
+        
+        # Si l'opérateur est += ou -=, il doit y avoir une valeur à droite
+        if update_op in (TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL):
+            value = self.expect(TokenType.NUMBER).value  # Attend une valeur numérique après l'opérateur
+            return {
+                "type": "VARIABLE_UPDATE",
+                "name": var_name,
+                "operator": update_op,
+                "value": {"type": "VALUE", "value": value}
+            }
+        
+        # Pour ++ ou --, aucune valeur supplémentaire n'est attendue
+        return {
+            "type": "VARIABLE_UPDATE",
+            "name": var_name,
+            "operator": update_op
+        }
 
     def parse_block(self):
         self.expect(TokenType.LBRACE)  # Vérifie et consomme l'ouverture du bloc

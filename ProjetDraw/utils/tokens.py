@@ -42,6 +42,8 @@ class TokenType(Enum):
     GREATER_EQUAL = "GREATER_EQUAL"
     PLUS_PLUS = "PLUS_PLUS"
     MINUS_MINUS = "MINUS_MINUS"
+    PLUS_EQUAL = "PLUS_EQUAL"
+    MINUS_EQUAL = "MINUS_EQUAL"
 
     # Nouveaux opérateurs arithmétiques
     PLUS = "PLUS"            # +

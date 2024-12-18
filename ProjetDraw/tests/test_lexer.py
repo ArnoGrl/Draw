@@ -12,10 +12,11 @@ class TestLexer(unittest.TestCase):
 
     def test_cursor_declaration(self):
         """Test cursor declaration."""
-        tokens = self.tokenize_code("cursor myCursor;")
+        tokens = self.tokenize_code("cursor myCursor; == ")
         self.assertEqual(tokens[0].type, TokenType.CURSOR)
         self.assertEqual(tokens[1].type, TokenType.IDENTIFIER)
         self.assertEqual(tokens[2].type, TokenType.SEMICOLON)
+        self.assertEqual(tokens[3].type, TokenType.EQUAL)
 
     def test_set_position(self):
         """Test setPosition with coordinates."""
