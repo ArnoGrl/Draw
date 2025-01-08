@@ -239,7 +239,7 @@ class Parser:
                             TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.LESS_THAN, TokenType.GREATER_THAN 
                             ).type
         right_expr = self.parse_expression()  # Analyser une expression complexe à droite
-        return {"left": left_expr, "operator": operator, "right": right_expr}
+        return {"type": "CONDITION","left": left_expr, "operator": operator, "right": right_expr}
 
 
 
