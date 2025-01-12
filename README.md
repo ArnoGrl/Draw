@@ -59,6 +59,4 @@ Les fichier Draw on l'extension .draw++
 - **fractale.draw++** : Un autre exemple illustrant des formes fractales.
 - **tests/** : Contient les tests unitaires pour vérifier la validité du lexer, parser et interpreter.
 
-## Contribution
-Les contributions sont les bienvenues ! Si vous souhaitez améliorer le projet, merci de soumettre une pull request ou d'ouvrir une issue.
 
