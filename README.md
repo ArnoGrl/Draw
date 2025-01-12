@@ -1,7 +1,7 @@
 # Draw Project
 
 ## Description
-Draw Project est une application qui permet d'interpréter des fichiers personnalisés au format `.draw++`. Le projet comprend un compilateur et un interpréteur écrit en Python, ainsi que des modules additionnels en C pour gérer certaines fonctions bas niveau. Il propose également une interface de développement (IDE) minimaliste pour créer et tester des fichiers `.draw++`.
+Draw ++ est une application qui permet d'interpréter des fichiers personnalisés au format `.draw++`. Le projet comprend un compilateur et un interpréteur écrit en Python, ainsi que des modules additionnels en C pour gérer certaines fonctions bas niveau. Il propose également une interface de développement (IDE) minimaliste pour créer et tester des fichiers `.draw++`.
 
 ## Structure du projet
 Voici la structure principale du projet :
@@ -50,14 +50,8 @@ Pour lancer l'interpréteur principal :
 ```
 python main.py
 ```
-Pour lancer l'IDE minimaliste : 
-```
-python IDE/ide.py
-```
-Vous pouvez charger un fichier `.draw++` en tant qu'argument :
-```
-python main.py demo.draw++
-```
+Vous pouvez tester des fichier pré-enregistré en appuyant sur open en haut à gauche de l'IDE.
+Les fichier Draw on l'extension .draw++
 
 ## Fichiers importants
 - **demo.draw++** : Un exemple de fichier script Draw++.
