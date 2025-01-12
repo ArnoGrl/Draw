@@ -64,6 +64,3 @@ python main.py demo.draw++
 ## Contribution
 Les contributions sont les bienvenues ! Si vous souhaitez améliorer le projet, merci de soumettre une pull request ou d'ouvrir une issue.
 
-## Licence
-Ce projet est distribué sous la licence MIT. Consultez le fichier `LICENSE` pour plus de détails.
-
