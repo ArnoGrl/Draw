@@ -6,7 +6,59 @@ class Lexer:
     def __init__(self, source_code):
         self.source_code = source_code  # Le code source à analyser
         self.tokens = []  # Liste pour stocker les tokens générés
+        
     
+    TOKEN_MAP = {
+        TokenType.CURSOR: "cursor",
+        TokenType.SET_POSITION: "setPosition",
+        TokenType.SET_COLOR: "setColor",
+        TokenType.SET_THICKNESS: "setThickness",
+        TokenType.MOVE: "move",
+        TokenType.ROTATE: "rotate",
+        TokenType.DRAW_LINE: "drawLine",
+        TokenType.DRAW_SQUARE: "drawSquare",
+        TokenType.DRAW_CIRCLE: "drawCircle",
+        TokenType.DRAW_POINT: "drawPoint",
+        TokenType.DRAW_ARC: "drawArc",
+        TokenType.ANIMATE: "animate",
+        TokenType.IF: "if",
+        TokenType.ELSE: "else",
+        TokenType.FOR: "for",
+        TokenType.WHILE: "while",
+        TokenType.INT: "int",
+        TokenType.FLOAT: "float",
+        TokenType.LBRACE: "{",
+        TokenType.RBRACE: "}",
+        TokenType.LPAREN: "(",
+        TokenType.RPAREN: ")",
+        TokenType.COMMA: ",",
+        TokenType.SEMICOLON: ";",
+        TokenType.ASSIGN: "=",
+        TokenType.DOT: ".",
+        TokenType.PLUS: "+",
+        TokenType.MINUS: "-",
+        TokenType.MULTIPLY: "*",
+        TokenType.DIVIDE: "/",
+        TokenType.MODULO: "%",
+        TokenType.PLUS_PLUS: "++",
+        TokenType.MINUS_MINUS: "--",
+        TokenType.PLUS_EQUAL: "+=",
+        TokenType.MINUS_EQUAL: "-=",
+        TokenType.NUMBER: "number",
+        TokenType.IDENTIFIER: "identifier",
+        TokenType.LESS_THAN: "<",
+        TokenType.GREATER_THAN: ">",
+        TokenType.EQUAL: "==",
+        TokenType.NOT_EQUAL: "!=",
+        TokenType.LESS_EQUAL: "<=",
+        TokenType.GREATER_EQUAL: ">=",
+    }
+
+    @staticmethod
+    def translate_token_type(token_type):
+        return Lexer.TOKEN_MAP.get(token_type, str(token_type))
+
+
     def tokenize(self):
         # Mots-clés et symboles spécifiques associés à leurs types
         patterns = {

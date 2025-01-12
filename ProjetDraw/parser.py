@@ -7,6 +7,8 @@ class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
         self.position = 0
+        self.errors = []
+    
     
     def parse(self):
         syntax_tree = []  # Liste pour stocker les nœuds syntaxiques
@@ -14,41 +16,51 @@ class Parser:
         while self.position < len(self.tokens):
             current_token = self.tokens[self.position]
             print(f"Current token at position {self.position}/{len(self.tokens)}: {current_token}")
+            try:
 
-            if current_token.type == TokenType.CURSOR:
-                syntax_tree.append(self.parse_cursor_declaration())
-            elif current_token.type == TokenType.IDENTIFIER:
-                if self.position + 1 < len(self.tokens) and self.tokens[self.position + 1].type in {TokenType.MINUS_MINUS, TokenType.PLUS_PLUS, TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL}:
-                    syntax_tree.append(self.parse_variable_update())
+                if current_token.type == TokenType.CURSOR:
+                    syntax_tree.append(self.parse_cursor_declaration())
+                elif current_token.type == TokenType.IDENTIFIER:
+                    if self.position + 1 < len(self.tokens) and self.tokens[self.position + 1].type in {TokenType.MINUS_MINUS, TokenType.PLUS_PLUS, TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL}:
+                        syntax_tree.append(self.parse_variable_update())
+                    else:
+                        syntax_tree.append(self.parse_cursor_method())
+                elif current_token.type == TokenType.IF:
+                    syntax_tree.append(self.parse_if_statement())
+                elif current_token.type == TokenType.FOR:
+                    syntax_tree.append(self.parse_for_loop())
+                elif current_token.type == TokenType.WHILE:
+                    syntax_tree.append(self.parse_while_loop())
+                elif current_token.type in (TokenType.INT, TokenType.FLOAT):
+                    syntax_tree.append(self.parse_variable_declaration())
+                elif current_token.type == TokenType.LBRACE:  # Détecte un bloc
+                    syntax_tree.append(self.parse_block())
+                elif current_token.type == TokenType.RBRACE:  # Détecte une accolade fermante
+                    # Passe l'accolade fermante à parse_block pour gérer la fin du bloc
+                    print(f"Detected RBRACE at position {self.position}")
+                    break  # On ne veut pas que parse analyse cela directement, c'est pour parse_block
                 else:
-                    syntax_tree.append(self.parse_cursor_method())
-            elif current_token.type == TokenType.IF:
-                syntax_tree.append(self.parse_if_statement())
-            elif current_token.type == TokenType.FOR:
-                syntax_tree.append(self.parse_for_loop())
-            elif current_token.type == TokenType.WHILE:
-                syntax_tree.append(self.parse_while_loop())
-            elif current_token.type in (TokenType.INT, TokenType.FLOAT):
-                syntax_tree.append(self.parse_variable_declaration())
-            elif current_token.type == TokenType.LBRACE:  # Détecte un bloc
-                syntax_tree.append(self.parse_block())
-            elif current_token.type == TokenType.RBRACE:  # Détecte une accolade fermante
-                # Passe l'accolade fermante à parse_block pour gérer la fin du bloc
-                print(f"Detected RBRACE at position {self.position}")
-                break  # On ne veut pas que parse analyse cela directement, c'est pour parse_block
-            else:
-                raise SyntaxError(f"Unexpected token {current_token.type} at position {self.position}")
-
+                    raise SyntaxError(f"Unexpected token {current_token.type} at position {self.position}")
+            except SyntaxError as e:
+                self.errors.append(str(e))
+                self.position += 1
+        if self.errors:
+            print("Parsing completed with errors:")
+            for error in self.errors:
+                print(f" - {error}")
         return syntax_tree
 
+
     def parse_cursor_declaration(self):
-        # Analyse de la déclaration d'un curseur
-        self.expect(TokenType.CURSOR)  # Assure que le token est bien un 'cursor'
-        cursor_name = self.expect(TokenType.IDENTIFIER).value
-        self.expect(TokenType.SEMICOLON)  # Assure que la déclaration finit par un ';'
-        return {"type": "CURSOR_DECLARATION", "name": cursor_name}
-    
-    
+        try:
+            self.expect(TokenType.CURSOR)  # Assure que le token est bien un 'cursor'
+            cursor_name = self.expect(TokenType.IDENTIFIER).value
+            self.expect(TokenType.SEMICOLON)  # Assure que la déclaration finit par un ';'
+            return {"type": "CURSOR_DECLARATION", "name": cursor_name}
+        except SyntaxError:
+            self.errors.append("Invalid cursor declaration syntax.")
+            raise
+
 
     def parse_cursor_method(self):
         # Analyse des méthodes sur le curseur, par exemple setPosition, drawLine, setColor, etc.
@@ -233,25 +245,41 @@ class Parser:
         return left
     
     def parse_condition(self):
-        print(f"Parsing condition at position {self.position}, token: {self.tokens[self.position]}")
-        left_expr = self.parse_expression()  # Analyser une expression complexe à gauche
-        operator = self.expect(TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL,
-                            TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.LESS_THAN, TokenType.GREATER_THAN 
-                            ).type
-        right_expr = self.parse_expression()  # Analyser une expression complexe à droite
-        return {"type": "CONDITION","left": left_expr, "operator": operator, "right": right_expr}
-
+        try:
+            print(f"Parsing condition at position {self.position}, token: {self.tokens[self.position]}")
+            left_expr = self.parse_expression()  # Analyser une expression complexe à gauche
+            operator = self.expect(
+                TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL,
+                TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.LESS_THAN, TokenType.GREATER_THAN
+            ).type
+            right_expr = self.parse_expression()  # Analyser une expression complexe à droite
+            return {"type": "CONDITION", "left": left_expr, "operator": operator, "right": right_expr}
+        except SyntaxError:
+            self.errors.append("Invalid condition syntax.")
+            raise
 
 
     
     def parse_variable_declaration(self):
-        # Analyse pour la déclaration de variable
+        """
+        Analyse la déclaration d'une variable.
+        """
+        # Analyse du type de variable (int ou float)
         var_type = self.expect(TokenType.INT, TokenType.FLOAT).type  # Type int ou float
-        var_name = self.expect(TokenType.IDENTIFIER).value
-        self.expect(TokenType.ASSIGN)
-        var_value = self.expect(TokenType.NUMBER).value
-        self.expect(TokenType.SEMICOLON)
-        return {"type": "VARIABLE_DECLARATION", "var_type": var_type, "name": var_name, "value": var_value}
+        var_name = self.expect(TokenType.IDENTIFIER).value  # Nom de la variable
+        self.expect(TokenType.ASSIGN)  # Consomme le symbole '='
+        
+        # Récupère la valeur et la structure correctement
+        var_value_token = self.expect(TokenType.NUMBER)  # Attend un numéro
+        var_value = {"type": "VALUE", "value": var_value_token.value}  # Structure pour la valeur
+
+        self.expect(TokenType.SEMICOLON)  # Vérifie la présence du point-virgule
+        return {
+            "type": "VARIABLE_DECLARATION",
+            "var_type": var_type,
+            "name": var_name,
+            "value": var_value
+        }
 
     def parse_variable_update(self):
         # Analyse pour la mise à jour d'une variable (par exemple, i++, i--, i += 2, i -= 2)
@@ -283,48 +311,53 @@ class Parser:
         }
 
     def parse_block(self):
-        self.expect(TokenType.LBRACE)  # Vérifie et consomme l'ouverture du bloc
-        print(f"Entering block at position {self.position - 1}, token: {self.tokens[self.position - 1]}")
+        try:
+            self.expect(TokenType.LBRACE)  # Vérifie et consomme l'ouverture du bloc
+            print(f"Entering block at position {self.position - 1}, token: {self.tokens[self.position - 1]}")
 
-        statements = []
+            statements = []
 
-        while True:
-            if self.match(TokenType.RBRACE):  # Détecte l'accolade fermante
-                print(f"Expecting RBRACE at position {self.position}, token: {self.tokens[self.position]}")
-                self.expect(TokenType.RBRACE)  # Consomme l'accolade fermante
-                break  # Terminer le bloc
-            if self.position >= len(self.tokens):  # Si la fin des tokens est atteinte
-                raise SyntaxError("Unexpected end of input. Missing closing '}' for block.")
+            while True:
+                if self.match(TokenType.RBRACE):  # Détecte l'accolade fermante
+                    print(f"Expecting RBRACE at position {self.position}, token: {self.tokens[self.position]}")
+                    self.expect(TokenType.RBRACE)  # Consomme l'accolade fermante
+                    break  # Terminer le bloc
+                if self.position >= len(self.tokens):  # Si la fin des tokens est atteinte
+                    raise SyntaxError("Unexpected end of input. Missing closing '}' for block.")
 
-            print(f"Parsing statement inside block at position {self.position}, token: {self.tokens[self.position]}")
-            statements.append(self.parse())  # Appelle parse pour analyser les instructions internes
+                print(f"Parsing statement inside block at position {self.position}, token: {self.tokens[self.position]}")
+                statements.append(self.parse())  # Appelle parse pour analyser les instructions internes
 
-        print(f"Exiting block at position {self.position}")
-        return {"type": "BLOCK", "statements": statements}
+            print(f"Exiting block at position {self.position}")
+            return {"type": "BLOCK", "statements": statements}
+        except SyntaxError:
+            self.errors.append("Invalid block structure.")
+            raise
 
 
     def expect(self, *token_types):
-        if self.position >= len(self.tokens):  # Vérifie explicitement si la position dépasse la longueur des tokens
-            print(f"Error: Reached end of tokens at position {self.position}, expected {token_types}")
-            raise SyntaxError(f"Unexpected end of input, expected {token_types}")
+        """
+        Vérifie si le token actuel correspond à l'un des types attendus et consomme le token.
+        """
+        if self.position >= len(self.tokens):  # Si on dépasse les tokens
+            expected_readable = ", ".join(Lexer.translate_token_type(t) for t in token_types)
+            raise SyntaxError(f"Unexpected end of input. Expected one of: {expected_readable}.")
 
         current_token = self.tokens[self.position]
         if current_token.type in token_types:
-            print(f"Consuming token at position {self.position}: {current_token}")
-            self.position += 1
+            self.position += 1  # Avance la position après avoir consommé le token
             return current_token
         else:
-            # Ajout de débogage : Affiche ce qui était attendu et ce qui a été trouvé
-            print(f"Error at position {self.position}: expected {token_types}, found {current_token}")
-            raise SyntaxError(f"Expected {token_types} at position {self.position}, but found {current_token.type}")
-
-
+            expected_readable = ", ".join(Lexer.translate_token_type(t) for t in token_types)
+            found_readable = Lexer.translate_token_type(current_token.type)
+            raise SyntaxError(
+                f"Syntax error at position {self.position}: Expected one of ({expected_readable}), but found '{found_readable}'."
+            )
+    
     def match(self, *token_types):
-        # Débogage : Vérification des tokens et des types attendus
         if self.position < len(self.tokens):
             current_token = self.tokens[self.position]
             print(f"Matching token at position {self.position}: {current_token} against {token_types}")
             return current_token.type in token_types
         print(f"Position {self.position} is out of range for matching token types: {token_types}")
         return False
-

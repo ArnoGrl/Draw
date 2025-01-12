@@ -9,13 +9,13 @@ int main() {
     Cursor cursor = createCursor();
     setPosition(&cursor, 200, 150);
     setColor(&cursor, (SDL_Color){255, 0, 0, 255}); // Rouge
-    drawCircle(renderer, &cursor, 50, 0);
+    drawCircle(renderer, &cursor, 50);
     setPosition(&cursor, 50, 100);
-    drawSquare(renderer, &cursor, 45, 1);
+    drawSquare(renderer, &cursor, 45);
     setPosition(&cursor, 300, 60);
-    drawRectangle(renderer,&cursor,15,80,1);
+    drawRectangle(renderer,&cursor,15,80);
     setPosition(&cursor, 300, 60);
-    drawTriangle(renderer,&cursor,30,50,0);
+    drawTriangle(renderer,&cursor,30,50);
 
     SDL_RenderPresent(renderer);
     SDL_Delay(3000);

@@ -16,8 +16,11 @@ class TestParser(unittest.TestCase):
 
     def test_boucle_for(self):
         code = """
-        if(i == 15){
-            cursor myCursor;
+        while(i < 12){
+            myCursor.drawSquare(10);
+        }
+        for(int i = 0; i <= 10; i++){
+            myCursor.drawCircle(10);
         }
         """
         syntax_tree = self.parse_code(code)

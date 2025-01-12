@@ -20,10 +20,10 @@ void setThickness(Cursor *cursor, int thickness);
 void rotate(Cursor *cursor, double angle);
 
 // Fonctions de dessin
-void drawSquare(SDL_Renderer *renderer, Cursor *cursor, int size, int filled);
-void drawTriangle(SDL_Renderer *renderer, Cursor *cursor, int base, int height, int filled);
-void drawRectangle(SDL_Renderer *renderer, Cursor *cursor, int width, int height, int filled);
-void drawCircle(SDL_Renderer *renderer, Cursor *cursor, int radius, int filled);
+void drawSquare(SDL_Renderer *renderer, Cursor *cursor, int size);
+void drawTriangle(SDL_Renderer *renderer, Cursor *cursor, int base, int height);
+void drawRectangle(SDL_Renderer *renderer, Cursor *cursor, int width, int height);
+void drawCircle(SDL_Renderer *renderer, Cursor *cursor, int radius);
 void drawLine(SDL_Renderer *renderer, Cursor *cursor, int length);
 void drawPoint(SDL_Renderer *renderer, Cursor *cursor);
 void drawArc(SDL_Renderer *renderer, Cursor *cursor, int radius, double angle);

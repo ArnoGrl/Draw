@@ -1,19 +1,41 @@
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from interpreter import Interpreter
 from lexer import Lexer
 from parser import Parser
-from test import Test
+import compiler
+
 
 class DrawPlusIDE:
     def __init__(self, root):
         self.root = root
         self.root.title("Draw++ IDE")
-        self.text_area = tk.Text(self.root, wrap="word", undo=True)
+
+        # Zone principale pour le code
+        self.text_area = tk.Text(self.root, wrap="word", undo=True, height=20)
         self.text_area.pack(fill="both", expand=True, padx=5, pady=5)
-        
+
+        # Zone dédiée pour les erreurs
+        self.error_area = tk.Text(self.root, wrap="word", height=10, bg="lightgray", fg="red", state="disabled")
+        self.error_area.pack(fill="both", expand=False, padx=5, pady=5)
+
         self.setup_menu()
         self.file_path = None
+
+    def clear_error_area(self):
+        self.error_area.config(state="normal")
+        self.error_area.delete(1.0, tk.END)
+        self.error_area.config(state="disabled")
+
+    def display_error(self, message):
+        self.error_area.config(state="normal")
+        self.error_area.insert(tk.END, message + "\n")
+        self.error_area.config(state="disabled")
 
     def setup_menu(self):
         menu = tk.Menu(self.root)
@@ -49,34 +71,54 @@ class DrawPlusIDE:
                 file.write(self.text_area.get(1.0, tk.END))
        
     def run_code(self):
-      code = self.text_area.get(1.0, tk.END).strip()
-      if not code:
-          messagebox.showwarning("Warning", "No code to run!")
-          return
-      try:
-          # Initialisation du Lexer avec le code source
-          lexer = Lexer(source_code=code)
-        
-          # Génération des tokens
-          tokens = lexer.tokenize()
-        
-          # Initialisation du Parser avec les tokens
-          parser = Parser(tokens=tokens)
-        
-          # Analyse syntaxique pour générer l'AST
-          ast = parser.parse()
-        
-          # Exécution de l'AST
-          interpreter = Interpreter()
-          interpreter.execute(ast)
+        code = self.text_area.get(1.0, tk.END).strip()
+        self.clear_error_area()
 
-          test = Test()
-          test.execute(ast)
-        
-          messagebox.showinfo("Success", "Code executed successfully!")
-      except Exception as e:
-          messagebox.showerror("Error", f"An error occurred: {e}")
-   
+        if not code:
+            self.display_error("Warning: No code to run!")
+            return
+
+        try:
+            # Lexer : Générer les tokens
+            lexer = Lexer(source_code=code)
+            tokens = lexer.tokenize()
+
+            # Parser : Générer l'AST
+            parser = Parser(tokens=tokens)
+            ast = parser.parse()
+
+            # Vérifiez les erreurs du parser
+            if parser.errors:
+                for error in parser.errors:
+                    # Filtrer les messages qui contiennent "Unexpected token"
+                    if "Unexpected token" not in error:
+                        self.display_error(f"{error}")
+                return  # Ne pas continuer si des erreurs de parsing sont présentes
+            # Interpreter : Exécuter l'AST
+            interpreter = Interpreter(syntax_tree=ast)
+            interpreter.execute()
+
+            # Vérifiez les erreurs de l'interpreter
+            if interpreter.errors:
+                for error in interpreter.errors:
+                    self.display_error(f"{error}")
+            else:
+                messagebox.showinfo("Success", "Code executed successfully!")
+
+                 # 4) Compilation du code C
+                c_code = compiler.generate_c_code(ast)  # Génération du C
+                compiler.save_to_file("output.c", c_code)
+                compiler.compile_c_to_exe("output.c", "output.exe")
+
+                # 5) (Optionnel) Exécuter l’exécutable
+                import subprocess
+                subprocess.Popen(["./output.exe"])  # Sur Windows, simplement "output.exe" fonctionne
+
+        except Exception as e:
+            # Si une erreur inattendue survient
+            self.display_error(f"An unexpected error occurred: {e}")
+
+  
     def validate_code(self):
      code = self.text_area.get(1.0, tk.END).strip()
      if not code:

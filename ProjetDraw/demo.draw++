@@ -1,0 +1,43 @@
+cursor myCursor;
+        cursor Cursor;
+        int i = 0;
+        int j = 50;
+        int g = 100;
+        int a = 25;
+        int b = 50;
+        while(i < 100){
+            myCursor.setPosition(j,g);
+            Cursor.setPosition(a,b);
+            j += 5
+            g += 2
+            a += 3
+            b += 8
+            myCursor.setColor(red);
+            Cursor.setColor(blue);
+
+            myCursor.drawLine(10);
+
+            myCursor.rotate(90);
+
+            myCursor.drawPoint();
+
+            myCursor.drawArc(50, 90);
+
+            myCursor.drawCircle(50);
+
+            myCursor.drawSquare(50);
+
+            Cursor.drawLine(10);
+
+            Cursor.rotate(90);
+
+            Cursor.drawPoint();
+
+            Cursor.drawArc(50, 90);
+
+            Cursor.drawCircle(50);
+
+            Cursor.drawSquare(50);
+            
+            i++
+}

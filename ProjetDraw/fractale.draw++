@@ -1,0 +1,24 @@
+cursor myCursor;
+cursor mycursor;
+cursor Cursor;
+
+myCursor.setPosition(350, 300);
+myCursor.setColor(blue);
+
+mycursor.setPosition(400, 300);
+mycursor.setColor(red);
+
+Cursor.setPosition(400, 300);
+Cursor.setColor(green);
+
+
+
+for (int size = 10; size <= 200; size += 20) {
+    myCursor.drawSquare(size);
+    myCursor.drawCircle(size);
+    Cursor.drawCircle(size);
+    mycursor.rotate(45);
+    mycursor.drawArc(size,90);
+}
+
+
