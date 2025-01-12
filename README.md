@@ -13,6 +13,7 @@ Draw-master/
 │   ├── lexer.py         # Analyseur lexical
 │   ├── parser.py        # Analyseur syntaxique
 │   ├── interpreter.py   # Interpréteur des commandes draw++
+│   ├── compiler.py
 │   ├── tests/           # Scripts de tests unitaires
 │   ├── IDE/             # Interface de développement minimaliste
 │   └── utils/           # Modules utilitaires (grammar, tokens)
