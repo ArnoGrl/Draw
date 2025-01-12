@@ -50,7 +50,11 @@ Pour lancer l'interpréteur principal :
 ```
 python main.py
 ```
+Pour lancer l'IDE minimaliste : 
+```
+python IDE/ide.py
 
+```
 Vous pouvez charger un fichier `.draw++` en tant qu'argument :
 ```
 python main.py demo.draw++
