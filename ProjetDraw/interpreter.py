@@ -3,18 +3,21 @@ from utils.tokens import Token
 from utils.tokens import TokenType
 from parser import Parser
 
-
-
 class Interpreter:
     def __init__(self, syntax_tree):
+        """
+        Initializes the Interpreter with the syntax tree (AST).
+        Tracks declared variables, cursors, and detected errors.
+        """
         self.syntax_tree = syntax_tree
-        self.variables = {}  # Stocker les variables et leurs valeurs
-        self.cursors = {}    # Stocker les curseurs définis
-        self.errors = []     # Liste des erreurs détectées
+        self.variables = {}  # Stores variables and their values
+        self.cursors = {}    # Stores declared cursors
+        self.errors = []     # List of detected errors
 
     def execute(self):
         """
-        Parcourt l'AST et vérifie chaque nœud.
+        Iterates through the AST and processes each node.
+        Accumulates errors encountered during execution.
         """
         for node in self.syntax_tree:
             try:
@@ -22,7 +25,7 @@ class Interpreter:
             except Exception as e:
                 self.errors.append(str(e))
         
-        # Affiche les erreurs à la fin
+        # Print errors if any were found
         if self.errors:
             print("Errors detected:")
             for error in self.errors:
@@ -32,7 +35,8 @@ class Interpreter:
 
     def execute_node(self, node):
         """
-        Vérifie un nœud en fonction de son type.
+        Executes a node based on its type.
+        Each type is handled by its corresponding method.
         """
         if "type" not in node:
             raise ValueError(f"Missing 'type' in node: {node}")
@@ -69,8 +73,6 @@ class Interpreter:
             self.check_draw_point(node)
         elif node_type == "DRAW_ARC":
             self.check_draw_arc(node)
-        elif node_type == "CURSOR_DECLARATION":
-            self.declare_cursor(node)
         elif node_type == "VARIABLE_UPDATE":
             self.update_variable(node)
         elif node_type == "FOR_LOOP":
@@ -85,26 +87,26 @@ class Interpreter:
             self.check_block(node)
         else:
             raise ValueError(f"Unknown node type: {node_type}")
-
-
-    # --- Fonctions utilitaires ---
+        
+    # --- Utility Functions ---
     def extract_numeric_value(self, value):
         """
-        Extrait une valeur numérique des nœuds de type 'VALUE' dans l'AST.
-        Si la valeur est une chaîne, elle est convertie en entier.
+        Extracts a numeric value from a 'VALUE' node in the AST.
+        Converts the value to an integer if it is a string.
         """
         if isinstance(value, dict) and value.get("type") == "VALUE":
             raw_value = value.get("value")
             try:
-                return int(raw_value)  # Convertir en entier
+                return int(raw_value)  # Convert to integer
             except ValueError:
                 raise ValueError(f"Invalid numeric value: {raw_value}")
         else:
             raise ValueError(f"Expected a numeric value, got: {value}")
-        
+            
     def extract_value(self, value_node):
         """
-        Extrait la valeur d'un nœud.
+        Extracts the value from a node.
+        Handles both constants and variables.
         """
         if not isinstance(value_node, dict) or "type" not in value_node:
             self.errors.append(f"Invalid value node: {value_node}")
@@ -113,14 +115,14 @@ class Interpreter:
 
         if value_node["type"] == "VALUE":
             try:
-                # Si la valeur est un identifiant (variable) plutôt qu'un entier
+                # Check if the value is a variable name
                 if isinstance(value_node["value"], str) and value_node["value"].isalpha():
                     if value_node["value"] in self.variables:
                         return self.variables[value_node["value"]]
                     else:
                         self.errors.append(f"Variable '{value_node['value']}' is not declared.")
                         return None
-                return int(value_node["value"])
+                return int(value_node["value"])  # Convert to integer
             except ValueError:
                 self.errors.append(f"Invalid value for VALUE type: {value_node['value']}")
                 print(f"Debug: ValueError on converting value {value_node['value']} to int.")
@@ -132,9 +134,13 @@ class Interpreter:
             self.errors.append(f"Unknown value type: {value_node}")
             print(f"Debug: Unknown value type encountered: {value_node}")
             return None
-        
-    # --- Vérifications spécifiques ---
+            
+    # --- Specific Validations ---
     def check_set_position(self, node):
+        """
+        Validates the 'setPosition' command for a cursor.
+        Ensures the cursor exists and the coordinates are integers.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -149,12 +155,20 @@ class Interpreter:
             self.errors.append(str(e))
 
     def check_draw_point(self, node):
+        """
+        Validates the 'drawPoint' command.
+        Ensures the cursor exists.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
             return
 
     def check_rotate(self, node):
+        """
+        Validates the 'rotate' command for a cursor.
+        Ensures the cursor exists and the angle is an integer.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -168,6 +182,10 @@ class Interpreter:
             self.errors.append(str(e))
 
     def check_set_thickness(self, node):
+        """
+        Validates the 'setThickness' command for a cursor.
+        Ensures the cursor exists and the thickness is a positive integer.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -182,7 +200,8 @@ class Interpreter:
 
     def declare_cursor(self, node):
         """
-        Gère la déclaration d'un curseur.
+        Handles the declaration of a cursor.
+        Ensures the cursor name is unique and initializes its properties.
         """
         cursor_name = node.get("name")
         if not cursor_name:
@@ -192,14 +211,18 @@ class Interpreter:
         if cursor_name in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is already declared.")
         else:
-            # Initialisez les propriétés par défaut du curseur
+            # Initialize default properties for the cursor
             self.cursors[cursor_name] = {
                 "position": (0, 0),
-                "color": (0, 0, 0, 255),  # Couleur noire par défaut (RGBA)
-                "thickness": 1           # Épaisseur par défaut
+                "color": (0, 0, 0, 255),  # Default color: black (RGBA)
+                "thickness": 1           # Default thickness
             }
 
     def check_move(self, node):
+        """
+        Validates the 'move' command for a cursor.
+        Ensures the cursor exists and the distance is a positive integer.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -211,16 +234,17 @@ class Interpreter:
                 self.errors.append(f"Distance for cursor '{cursor_name}' must be a positive integer.")
         except ValueError as e:
             self.errors.append(str(e))
-
+            
     def check_condition(self, condition):
         """
-        Vérifie la validité d'une condition.
+        Validates a condition node.
+        Compares left and right values using the specified operator.
         """
         left = self.extract_value(condition["left"])
         right = self.extract_value(condition["right"])
         operator = condition["operator"]
 
-        # Mappe les opérateurs TokenType aux opérations Python
+        # Map TokenType operators to Python operations
         if operator == TokenType.EQUAL:
             return left == right
         elif operator == TokenType.NOT_EQUAL:
@@ -238,24 +262,29 @@ class Interpreter:
 
     def validate_expression(self, expr, context=""):
         """
-        Valide une expression dans le nœud CONDITION ou ailleurs.
+        Validates an expression node.
+        Ensures the structure and values are correct.
         """
         if not isinstance(expr, dict):
             self.errors.append(f"{context} is not a valid expression: {expr}")
             return
 
         if expr["type"] == "VALUE":
-            # Vérifiez si 'value' est une chaîne ou un entier
+            # Check if 'value' is a string or integer
             if not isinstance(expr["value"], (str, int)):
                 self.errors.append(f"{context} contains an invalid VALUE: {expr}")
         elif expr["type"] == "EXPRESSION":
-            # Gérer les expressions complexes
+            # Handle nested expressions
             self.validate_expression(expr["left"], context="Left operand")
             self.validate_expression(expr["right"], context="Right operand")
         else:
             self.errors.append(f"{context} contains an unsupported expression type: {expr['type']}")
 
     def check_draw_line(self, node):
+        """
+        Validates the 'drawLine' command.
+        Ensures the cursor exists and the length is a positive integer.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -269,6 +298,10 @@ class Interpreter:
             self.errors.append(str(e))
 
     def check_draw_circle(self, node):
+        """
+        Validates the 'drawCircle' command.
+        Ensures the cursor exists and the radius is positive.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -282,6 +315,10 @@ class Interpreter:
             self.errors.append(str(e))
 
     def check_draw_square(self, node):
+        """
+        Validates the 'drawSquare' command.
+        Ensures the cursor exists and the size is positive.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -295,6 +332,10 @@ class Interpreter:
             self.errors.append(str(e))
 
     def check_set_color(self, node):
+        """
+        Validates the 'setColor' command.
+        Ensures the cursor exists and the color is valid.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -302,8 +343,12 @@ class Interpreter:
             color = node.get("color")
             if not isinstance(color, str):
                 self.errors.append(f"Invalid color '{color}' for cursor '{cursor_name}'.")
-                
+
     def check_draw_arc(self, node):
+        """
+        Validates the 'drawArc' command.
+        Ensures the cursor exists, the radius is positive, and the angle is valid.
+        """
         cursor_name = node["cursor"]
         if cursor_name not in self.cursors:
             self.errors.append(f"Cursor '{cursor_name}' is not declared.")
@@ -320,23 +365,24 @@ class Interpreter:
             self.errors.append(str(e))
 
     def declare_variable(self, node):
+        """
+        Declares a new variable.
+        Ensures the name is unique and the value is valid.
+        """
         var_name = node.get("name")
         if not var_name:
             self.errors.append("Variable declaration missing variable name.")
             return
 
-        # Vérifie si la variable existe déjà
         if var_name in self.variables:
             self.errors.append(f"Variable '{var_name}' is already declared.")
             return
 
-        # Vérifie que le nœud contient une valeur valide
         var_value_node = node.get("value")
         if not var_value_node or var_value_node["type"] != "VALUE":
             self.errors.append(f"Invalid value in declaration of variable '{var_name}'.")
             return
 
-        # Extraire et affecter la valeur
         var_value = self.extract_value(var_value_node)
         if var_value is None:
             self.errors.append(f"Unable to extract value for variable '{var_name}'.")
@@ -346,35 +392,31 @@ class Interpreter:
 
     def update_variable(self, node):
         """
-        Met à jour une variable existante.
+        Updates an existing variable.
+        Handles increment, decrement, and assignment operations.
         """
         var_name = node.get("name")
         if not var_name:
             self.errors.append("Update step missing variable name.")
             return
 
-        # Vérifie si la variable existe
         if var_name not in self.variables:
             self.errors.append(f"Variable '{var_name}' is not declared.")
             return
 
-        # Extraire la valeur actuelle de la variable
         current_value = self.variables.get(var_name)
         if current_value is None:
             self.errors.append(f"Variable '{var_name}' has no assigned value.")
             return
 
-        # Obtenir l'opérateur et la valeur
         operator = node.get("operator")
-        value_node = node.get("value", {"type": "VALUE", "value": 1})  # Par défaut, 1 pour ++ ou --
+        value_node = node.get("value", {"type": "VALUE", "value": 1})  
 
-        # Extraire la valeur
         update_value = self.extract_value(value_node)
         if update_value is None:
             self.errors.append(f"Invalid update value for variable '{var_name}'.")
             return
 
-        # Appliquer l'opérateur
         try:
             if operator == TokenType.PLUS_EQUAL:
                 self.variables[var_name] += update_value
@@ -388,35 +430,37 @@ class Interpreter:
                 self.errors.append(f"Unknown update operator '{operator}' for variable '{var_name}'.")
         except TypeError as e:
             self.errors.append(f"Error in update step of FOR_LOOP: {str(e)}")
-
+            
 
     def check_block(self, node):
         """
-        Vérifie qu'un bloc (BLOCK) est correctement formé.
+        Validates a BLOCK node.
+        Ensures it has a 'statements' key and that the statements are well-formed.
         """
         if "statements" not in node or not isinstance(node["statements"], list):
             self.errors.append("Each 'BLOCK' must have a 'statements' key as a list.")
             return
 
-        # Vérifie que chaque élément dans 'statements' est une liste
+        # Check if each element in 'statements' is a list
         for statement_list in node["statements"]:
             if not isinstance(statement_list, list):
                 self.errors.append("Each 'statements' entry in BLOCK must be a list.")
                 return
 
-            # Vérifie chaque instruction dans la liste
+            # Validate each instruction in the list
             for statement in statement_list:
                 if not isinstance(statement, dict) or "type" not in statement:
                     self.errors.append(f"Invalid statement in BLOCK: {statement}")
                 else:
-                    # Exécute ou vérifie chaque instruction
+                    # Execute or validate the statement
                     self.execute_node(statement)
 
     def check_while_loop(self, node):
         """
-        Vérifie un nœud de type WHILE_LOOP.
+        Validates a WHILE_LOOP node.
+        Ensures the condition and body are well-defined.
         """
-        # Vérifie la structure de la condition
+        # Check the condition structure
         condition = node.get("condition")
         if not condition or "type" not in condition or condition["type"] != "CONDITION":
             self.errors.append("Missing or invalid condition in WHILE_LOOP.")
@@ -426,12 +470,12 @@ class Interpreter:
         right = self.extract_value(condition["right"])
         operator = condition["operator"]
 
-        # Vérifie que l'opérateur est un TokenType attendu
+        # Ensure the operator is a valid TokenType
         if not isinstance(operator, TokenType):
             self.errors.append(f"Invalid operator in condition: {operator}")
             return
         
-        # Vérifie le corps de la boucle
+        # Check the loop body
         body = node.get("body", {})
         if body.get("type") != "BLOCK":
             self.errors.append("WHILE_LOOP body must be a BLOCK.")
@@ -445,6 +489,10 @@ class Interpreter:
                     self.execute_node(stmt)
 
     def check_for_loop(self, node):
+        """
+        Validates a FOR_LOOP node.
+        Ensures initialization, condition, update, and body are properly defined.
+        """
         init = node.get("init")
         if not init or init["type"] != "VARIABLE_DECLARATION":
             self.errors.append("Invalid or missing initialization in FOR_LOOP.")
@@ -489,22 +537,24 @@ class Interpreter:
 
     def check_if_statement(self, node):
         """
-        Valide un nœud IF_STATEMENT.
+        Validates an IF_STATEMENT node.
+        Ensures the condition, true_block, and false_block (if present) are valid.
         """
-        # Vérifie que le champ condition est présent et de type CONDITION
+        # Ensure the condition field is present and is of type CONDITION
         if "condition" not in node or node["condition"]["type"] != "CONDITION":
             self.errors.append(f"Missing or invalid condition in IF_STATEMENT: {node}")
             return
         
-        # Vérifie la condition
+        # Validate the condition
         self.check_condition(node["condition"])
         
-        # Vérifie les blocs true_block et false_block
+        # Validate the true_block and false_block if they exist
         if "true_block" in node and node["true_block"]:
             self.check_block(node["true_block"])
         if "false_block" in node and node["false_block"]:
             self.check_block(node["false_block"])
 
+            
 ast_1 = [
     {"type": "CURSOR_DECLARATION", "name": "mainCursor"},
     {

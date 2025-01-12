@@ -2,7 +2,7 @@ from lexer import Lexer
 from parser import Parser
 
 def test_parser():
-    # Échantillons de code Draw++ à tester
+    
     tests = [
         {
             "description": "Déclaration de curseur",
@@ -77,25 +77,25 @@ def test_parser():
         },
     ]
 
-    # Exécution des tests
+
     for test in tests:
         print(f"Running test: {test['description']}")
         code = test["code"]
         expected_ast = test["expected_ast"]
 
         try:
-            # Étape 1 : Lexer
+        
             lexer = Lexer(source_code=code)
             tokens = lexer.tokenize()
             print("Tokens generated successfully.")
 
-            # Étape 2 : Parser
+     
             parser = Parser(tokens=tokens)
             ast = parser.parse()
             print("AST generated successfully:")
             print(ast)
 
-            # Comparaison avec l'AST attendu
+            
             if ast == expected_ast:
                 print("Test passed: Generated AST matches expected AST.")
             else:

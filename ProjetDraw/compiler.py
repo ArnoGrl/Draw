@@ -3,7 +3,7 @@ import unittest
 import sys
 import os
 
-# Ajoute le chemin du répertoire parent pour trouver lexer.py
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from parser import Parser
 from utils.tokens import TokenType
@@ -155,167 +155,178 @@ COLOR_MAP = {
     "yellowgreen":         "(SDL_Color){154, 205, 50, 255}"
 }
 
-
-#Fonction de génération de code C à partir de l'AST
+# Function to generate C code from the AST
 def generate_c_code(ast):
-    """Génère le code C à partir de l'AST fourni."""
-    code = ["#include <stdio.h>", "#include <stdbool.h>", "#include \"C/include/draw_cursor.h\"","#include \"C/src/draw_cursor.c\"", "#include <SDL2/SDL.h>" "\n"]
-    code.append("int main() { \n"
-            "    SDL_Init(SDL_INIT_VIDEO);\n"
-            "    SDL_Window *window = SDL_CreateWindow(\"Draw++ Test\", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN);\n"
-            "    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);\n")
+    """
+    Generates C code from the provided AST.
+    - Sets up SDL for rendering.
+    - Processes each AST node into C instructions.
+    """
+    # Required headers and SDL initialization
+    code = [
+        "#include <stdio.h>",
+        "#include <stdbool.h>",
+        "#include \"C/include/draw_cursor.h\"",
+        "#include \"C/src/draw_cursor.c\"",
+        "#include <SDL2/SDL.h>\n"
+    ]
 
+    # Main function setup with SDL initialization
+    code.append(
+        "int main() {\n"
+        "    SDL_Init(SDL_INIT_VIDEO);\n"
+        "    SDL_Window *window = SDL_CreateWindow(\"Draw++ Test\", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN);\n"
+        "    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);\n"
+    )
 
+    # Translate AST instructions into C code
     for node in ast:
-        code.append(gerer_instruction(node))  # Génère chaque ligne d'instruction
+        code.append(gerer_instruction(node))
 
-    code.append("SDL_RenderPresent(renderer);")
-    code.append("SDL_Delay(3000);")
-    code.append("SDL_DestroyRenderer(renderer);")
-    code.append("SDL_DestroyWindow(window);")
-    code.append("SDL_Quit();")
+    # Finalize rendering and cleanup
+    code.append("    SDL_RenderPresent(renderer);")
+    code.append("    SDL_Delay(3000);")
+    code.append("    SDL_DestroyRenderer(renderer);")
+    code.append("    SDL_DestroyWindow(window);")
+    code.append("    SDL_Quit();")
     code.append("    return 0;")
     code.append("}")
+
     return "\n".join(code)
 
 
-# Fonction pour gérer toutes les instructions du parser
-# Fonction pour gérer toutes les instructions du parser
+# Function to handle individual AST instructions
 def gerer_instruction(instruction):
-
-    #Gerer l'ast qui est sous forme de list 
+    """
+    Translates an AST instruction into C code.
+    Handles lists, variable declarations, and conditions.
+    """
+    # Process lists of instructions
     if isinstance(instruction, list):
         code = ""
         for instr in instruction:
             code += gerer_instruction(instr) + "\n"
         return code
 
+    # Handle variable declarations
     if instruction["type"] == "VARIABLE_DECLARATION":
         var_type = "int" if instruction["var_type"] == "INT" else "float"
-        
-        # instruction["value"] peut être un dict contenant "type" et "value"
-        if isinstance(instruction["value"], dict) and instruction["value"]["type"] == "VALUE":
-            code_value = instruction["value"]["value"]
-        else:
-            # Gérer d'autres cas selon la structure de 'instruction["value"]'
-            code_value = instruction["value"] 
-        
+        code_value = (
+            instruction["value"]["value"]
+            if isinstance(instruction["value"], dict) and instruction["value"]["type"] == "VALUE"
+            else instruction["value"]
+        )
         return f"    {var_type} {instruction['name']} = {code_value};"
-        
-    # Condition
+
+    # Handle condition expressions
     elif instruction["type"] == "CONDITION":
         return gerer_condition(instruction)
     
-    # Mise à jour de variable
+    # Variable update (e.g., increment, decrement, addition assignment)
     elif instruction["type"] == "VARIABLE_UPDATE":
-        var_name = instruction["name"]
-        operator = instruction["operator"]
-        if operator == TokenType.PLUS_PLUS:  # Utilisation de TokenType
+        var_name = instruction["name"]  # Name of the variable
+        operator = instruction["operator"]  # Operator type (e.g., ++, --)
+        if operator == TokenType.PLUS_PLUS:  # Increment operator
             return f"    {var_name}++;"
-        elif operator == TokenType.MINUS_MINUS:  # Utilisation de TokenType
+        elif operator == TokenType.MINUS_MINUS:  # Decrement operator
             return f"    {var_name}--;"
-        elif operator == TokenType.PLUS_EQUAL:  # Utilisation de TokenType
+        elif operator == TokenType.PLUS_EQUAL:  # Add and assign
             value = instruction["value"]["value"]
             return f"    {var_name} += {value};"
-        elif operator == TokenType.MINUS_EQUAL:  # Utilisation de TokenType
+        elif operator == TokenType.MINUS_EQUAL:  # Subtract and assign
             value = instruction["value"]["value"]
             return f"    {var_name} -= {value};"
-    
-    # Boucle while
+
+    # While loop
     elif instruction["type"] == "WHILE_LOOP":
-        condition = gerer_condition(instruction["condition"])
+        condition = gerer_condition(instruction["condition"])  # Translate condition to C
         code = f"    while ({condition}) {{\n"
         for statement in instruction["body"]["statements"]:
-            code += f"{gerer_instruction(statement)}\n"
+            code += f"{gerer_instruction(statement)}\n"  # Process each statement in the loop
         code += "    }"
         return code
 
-    # Condition if
+    # If statement
     elif instruction["type"] == "IF_STATEMENT":
-        condition = gerer_condition(instruction["condition"])
+        condition = gerer_condition(instruction["condition"])  # Translate condition to C
         code = f"    if ({condition}) {{\n"
         for statement in instruction["true_block"]["statements"]:
-            code += f"{gerer_instruction(statement)}\n"
+            code += f"{gerer_instruction(statement)}\n"  # Process "if" block statements
         code += "    }"
-        if instruction["false_block"]:
+        if instruction["false_block"]:  # Handle optional "else" block
             code += "    else {\n"
             for statement in instruction["false_block"]["statements"]:
-                code += f"{gerer_instruction(statement)}\n"
+                code += f"{gerer_instruction(statement)}\n"  # Process "else" block statements
             code += "    }"
         return code
-    
-    # Boucle for
+
+    # For loop
     elif instruction["type"] == "FOR_LOOP":
-        init = gerer_instruction(instruction["init"]).strip(";")
-        condition = gerer_condition(instruction["condition"])
-        update = gerer_instruction(instruction["update"]).strip(";")
+        init = gerer_instruction(instruction["init"]).strip(";")  # Initialization
+        condition = gerer_condition(instruction["condition"])  # Loop condition
+        update = gerer_instruction(instruction["update"]).strip(";")  # Update operation
         code = f"    for ({init}; {condition}; {update}) {{\n"
         for statement in instruction["body"]["statements"]:
-            code += f"{gerer_instruction(statement)}\n"
+            code += f"{gerer_instruction(statement)}\n"  # Process statements inside the loop
         code += "    }"
         return code
 
-    # Dessin -- il faut prendre chaque instruction du parser pour la traiter et ensuite retourner la bonne fonction en C
-    # Déclaration d'une position 
+    # Cursor position setting
     elif instruction["type"] == "SET_POSITION":
         return f"    setPosition(&{instruction['cursor']}, {instruction['x']['value']}, {instruction['y']['value']});"
 
+    # Cursor color setting
     elif instruction["type"] == "SET_COLOR":
-        color_name = instruction["color"]  # par exemple "red", "blue", etc.
-
-        # Récupérer la valeur C correspondante :
-        if color_name in COLOR_MAP:
-            color_value = COLOR_MAP[color_name]
-        else:
-            # Si la couleur n'est pas reconnue, on peut mettre une couleur par défaut
-            color_value = "(SDL_Color){0, 0, 0, 255}"  # noir par défaut
-
-        # Générer la ligne de code C
+        color_name = instruction["color"]  # Color name (e.g., "red")
+        color_value = COLOR_MAP.get(color_name, "(SDL_Color){0, 0, 0, 255}")  # Default to black if not found
         return f"    setColor(&{instruction['cursor']}, {color_value});"
-    
-    # Déclaration d'une épaisseur
+
+    # Set line thickness for the cursor
     elif instruction["type"] == "SET_THICKNESS":
         return f"    setThickness(&{instruction['cursor']}, {instruction['thickness']});"
-    
-    # Déclaration de la rotation 
+
+    # Rotate the cursor by a specified angle
     elif instruction["type"] == "ROTATE":
         return f"    rotate(&{instruction['cursor']}, {instruction['angle']['value']});"
-    
-    # Dessin d'une ligne
+
+    # Draw a line
     elif instruction["type"] == "DRAW_LINE":
         return f"    drawLine(renderer, &{instruction['cursor']}, {instruction['length']['value']});"
 
+    # Cursor declaration
     elif instruction["type"] == "CURSOR_DECLARATION":
-        # Si c'est un curseur, on génère "Cursor monCurseur = createCursor();"
-        return f"    Cursor {instruction['name']} = createCursor();"
-    
-    # Dessin d'un point
+        return f"    Cursor {instruction['name']} = createCursor();"  
+
+    # Draw a point
     elif instruction["type"] == "DRAW_POINT":
         return f"    drawPoint(renderer, &{instruction['cursor']});"
-    
-    # Dessin d'un arc
+
+    # Draw an arc
     elif instruction["type"] == "DRAW_ARC":
         return f"    drawArc(renderer, &{instruction['cursor']}, {instruction['radius']['value']}, {instruction['angle']['value']});"
 
-    # Dessin d'un cercle
+    # Draw a circle
     elif instruction["type"] == "DRAW_CIRCLE":
         return f"    drawCircle(renderer, &{instruction['cursor']}, {instruction['radius']['value']});"
-        
-    # Dessin d'un carré
+
+    # Draw a square
     elif instruction["type"] == "DRAW_SQUARE":
         return f"    drawSquare(renderer, &{instruction['cursor']}, {instruction['side_length']['value']});"
-        
-    # Instructions non gérées
-    raise ValueError(f"Instruсtion inconnue : {instruction}")
+
+    # Handle unknown instructions
+    raise ValueError(f"Unknown instruction: {instruction}")
 
 
 
-    
-# Fonction pour gérer les conditions
+# Process conditional expressions
 def gerer_condition(condition):
-    left = condition["left"]["value"]   
-    right = condition["right"]["value"]
-    operator = condition["operator"].name
+    """
+    Converts a Draw++ condition into a C-compatible logical expression.
+    Example: "x > 10" → "x > 10"
+    """
+    left = condition["left"]["value"]  # Left operand
+    right = condition["right"]["value"]  # Right operand
+    operator = condition["operator"].name  # Operator type
     operators_map = {
         "GREATER_THAN": ">",
         "LESS_THAN": "<",
@@ -323,111 +334,23 @@ def gerer_condition(condition):
         "LESS_EQUAL": "<=",
         "EQUAL": "==",
         "NOT_EQUAL": "!=",
-    
-
-        
     }
     return f"{left} {operators_map[operator]} {right}"
 
-
-# Sauvegarde dans un fichier .c
+# Save the generated C code to a file
 def save_to_file(filename, content):
-    """Sauvegarde le contenu dans un fichier."""
+    """Saves the generated C code to the specified file."""
     with open(filename, "w") as f:
         f.write(content)
 
-
-# Compilation en .exe avec GCC 
+# Compile the C code into an executable using GCC
 def compile_c_to_exe(c_file, exe_file):
-    """Compile le fichier C en un exécutable avec GCC."""
+    """
+    Compiles the generated C code into an executable using GCC.
+    - Links against the SDL2 library for rendering.
+    """
     try:
-        subprocess.run([
-        "gcc", c_file, "-o", exe_file, "-lSDL2", "-lm"
-        ], check=True)
-
-        print(f"Compilation réussie : {exe_file}")
+        subprocess.run(["gcc", c_file, "-o", exe_file, "-lSDL2", "-lm"], check=True)
+        print(f"Compilation successful: {exe_file}")
     except subprocess.CalledProcessError as e:
-        print("Erreur de compilation :", e)
-
-
-# Classe de test pour parser le code et générer l'AST 
-class TestParser(unittest.TestCase):
-    def parse_code(self, code):
-        """Helper function to parse code and return the syntax tree."""
-        lexer = Lexer(code)  # Instancie le Lexer
-        tokens = lexer.tokenize()
-        parser = Parser(tokens)  # Instancie le Parser
-        return parser.parse()
-
-    def test_block_with_two_statements(self):
-        code = """
-        cursor myCursor;
-        cursor Cursor;
-        int i = 0;
-        int j = 50;
-        int g = 100;
-        int a = 25;
-        int b = 50;
-        while(i < 100){
-            myCursor.setPosition(j,g);
-            Cursor.setPosition(a,b);
-            j += 5
-            g += 2
-            a += 3
-            b += 8
-            myCursor.setColor(red);
-            Cursor.setColor(blue);
-
-            myCursor.drawLine(10);
-
-            myCursor.rotate(90);
-
-            myCursor.drawPoint();
-
-            myCursor.drawArc(50, 90);
-
-            myCursor.drawCircle(50);
-
-            myCursor.drawSquare(50);
-
-            Cursor.drawLine(10);
-
-            Cursor.rotate(90);
-
-            Cursor.drawPoint();
-
-            Cursor.drawArc(50, 90);
-
-            Cursor.drawCircle(50);
-
-            Cursor.drawSquare(50);
-            
-            i++
-        }
-        """
-        syntax_tree = self.parse_code(code)
-        return syntax_tree
-
-
-# Programme principal
-if __name__ == "__main__":
-    # Étape 1 : Parser le code pour générer l'AST et l'afficher 
-    parser = TestParser()
-    ast = parser.test_block_with_two_statements()
-    print("\nAST généré avec succès :")
-    print(ast)
-
-
-
-    # Étape 2 : Générer le code C
-    c_code = generate_c_code(ast)
-    print("\nCode C généré :")
-    print(c_code)
-
-    # Étape 3 : Sauvegarder dans un fichier
-    c_filename = "output.c"
-    save_to_file(c_filename, c_code)
-
-    # Étape 4 : Compiler en exécutable
-    exe_filename = "output.exe"
-    compile_c_to_exe(c_filename, exe_filename)
+        print("Compilation error:", e)

@@ -1,40 +1,38 @@
 # grammar.py
-
-# Grammaire de Draw++ définie en Python
+# This file defines the grammar rules for the Draw++ language.
 
 grammar = {
     "programme": {
-        "description": "Un programme Draw++ est une séquence d'instructions.",
-        "rule": ["instruction*"]
+        "description": "A Draw++ program is a sequence of instructions.",
+        "rule": ["instruction*"]  # Zero or more instructions
     },
     
     "instruction": {
-        "description": "Une instruction peut être une déclaration de curseur, une position, un dessin, une condition, une boucle, etc.",
+        "description": "An instruction can represent various commands such as cursor declarations, movements, drawings, conditions, loops, etc.",
         "rule": [
-            "declaration_curseur",
-            "positionnement_curseur",
-            "couleur_curseur",
-            "epaisseur_curseur",
-            "deplacement_curseur",
-            "rotation_curseur",
-            "dessin_ligne",
-            "dessin_carre",
-            "dessin_cercle",
-            "dessin_point",
-            "dessin_arc",
-            "declaration_variable",
-            "affectation_variable",
-            "conditionnelle",
-            "boucle_for",
-            "boucle_while",
-            "bloc_instructions",
-            "appel_bloc",
-            "fonction",
-            "appel_fonction"
+            "declaration_curseur",   # Declares a cursor
+            "positionnement_curseur", # Sets the cursor's position
+            "couleur_curseur",       # Changes the cursor's color
+            "epaisseur_curseur",     # Sets line thickness
+            "deplacement_curseur",   # Moves the cursor
+            "rotation_curseur",      # Rotates the cursor
+            "dessin_ligne",          # Draws a line
+            "dessin_carre",          # Draws a square
+            "dessin_cercle",         # Draws a circle
+            "dessin_point",          # Draws a point
+            "dessin_arc",            # Draws an arc
+            "declaration_variable",  # Declares a variable
+            "affectation_variable",  # Assigns a value to a variable
+            "conditionnelle",         # If-else statement
+            "boucle_for",             # For loop
+            "boucle_while",           # While loop
+            "bloc_instructions",      # Instruction block
+            "appel_bloc",             # Calls a block of instructions
+            "fonction",               # Defines a function
+            "appel_fonction"          # Calls a function
         ]
     },
     
-
     "expression": {
         "description": "Une expression qui peut être une valeur, une opération mathématique, ou une combinaison.",
         "rule": [

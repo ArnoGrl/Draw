@@ -1,7 +1,7 @@
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # Add parent directory to the Python path
 
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -12,65 +12,105 @@ import compiler
 
 
 class DrawPlusIDE:
+    """
+    Implements the main interface for the Draw++ IDE.
+    - Provides a text area for code input.
+    - Displays errors in a separate, dedicated area.
+    - Includes functionality for file handling and menu setup.
+    """
     def __init__(self, root):
         self.root = root
-        self.root.title("Draw++ IDE")
+        self.root.title("Draw++ IDE")  # Set the window title
 
-        # Zone principale pour le code
+        # Main text area for writing code
         self.text_area = tk.Text(self.root, wrap="word", undo=True, height=20)
         self.text_area.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Zone dédiée pour les erreurs
+        # Dedicated error display area
         self.error_area = tk.Text(self.root, wrap="word", height=10, bg="lightgray", fg="red", state="disabled")
         self.error_area.pack(fill="both", expand=False, padx=5, pady=5)
 
-        self.setup_menu()
-        self.file_path = None
+        self.setup_menu()  # Initialize the menu
+        self.file_path = None  # Current file path (if a file is open)
 
     def clear_error_area(self):
-        self.error_area.config(state="normal")
-        self.error_area.delete(1.0, tk.END)
-        self.error_area.config(state="disabled")
+        """
+        Clears the content of the error area.
+        """
+        self.error_area.config(state="normal")  # Enable editing in the error area
+        self.error_area.delete(1.0, tk.END)  # Delete all content
+        self.error_area.config(state="disabled")  # Disable editing again
 
     def display_error(self, message):
-        self.error_area.config(state="normal")
-        self.error_area.insert(tk.END, message + "\n")
-        self.error_area.config(state="disabled")
+        """
+        Displays an error message in the error area.
+        - Appends the provided message to the error area.
+        """
+        self.error_area.config(state="normal")  # Enable editing
+        self.error_area.insert(tk.END, message + "\n")  # Add the error message
+        self.error_area.config(state="disabled")  # Disable editing
 
     def setup_menu(self):
+        """
+        Configures the application's menu bar.
+        - Adds a "File" menu for file operations (New, Open, Save).
+        - Adds a "Run" menu for executing code.
+        """
         menu = tk.Menu(self.root)
         self.root.config(menu=menu)
 
+        # File menu for creating, opening, and saving files
         file_menu = tk.Menu(menu, tearoff=0)
         file_menu.add_command(label="New", command=self.new_file)
         file_menu.add_command(label="Open", command=self.open_file)
         file_menu.add_command(label="Save", command=self.save_file)
         menu.add_cascade(label="File", menu=file_menu)
 
+        # Run menu for executing the code
         run_menu = tk.Menu(menu, tearoff=0)
         run_menu.add_command(label="Run", command=self.run_code)
         menu.add_cascade(label="Run", menu=run_menu)
 
     def new_file(self):
-        self.text_area.delete(1.0, tk.END)
-        self.file_path = None
+        """
+        Clears the text area and resets the file path.
+        """
+        self.text_area.delete(1.0, tk.END)  # Clear the text area
+        self.file_path = None  # Reset the file path
 
     def open_file(self):
+        """
+        Opens a file dialog to select and load a file.
+        - Reads the content of the selected file into the text area.
+        """
         self.file_path = filedialog.askopenfilename(filetypes=[("Draw++ Files", "*.draw++"), ("All Files", "*.*")])
         if self.file_path:
             with open(self.file_path, 'r') as file:
-                self.text_area.delete(1.0, tk.END)
-                self.text_area.insert(1.0, file.read())
+                self.text_area.delete(1.0, tk.END)  # Clear current text
+                self.text_area.insert(1.0, file.read())  # Load file content
 
     def save_file(self):
+        """
+        Saves the content of the text area to a file.
+        - Prompts for a file name if none is specified.
+        """
         if not self.file_path:
+            # Open a save dialog if no file path is set
             self.file_path = filedialog.asksaveasfilename(defaultextension=".draw++",
-                                                          filetypes=[("Draw++ Files", "*.draw++"), ("All Files", "*.*")])
+                                                        filetypes=[("Draw++ Files", "*.draw++"), ("All Files", "*.*")])
         if self.file_path:
             with open(self.file_path, 'w') as file:
-                file.write(self.text_area.get(1.0, tk.END))
+                file.write(self.text_area.get(1.0, tk.END))  # Save the text area content
        
+
     def run_code(self):
+        """
+        Executes the code written in the text area.
+        - Performs lexical analysis to generate tokens.
+        - Parses tokens into an Abstract Syntax Tree (AST).
+        - Interprets the AST and executes the logic.
+        - Compiles the code into a C program and optionally runs it.
+        """
         code = self.text_area.get(1.0, tk.END).strip()
         self.clear_error_area()
 
@@ -79,66 +119,69 @@ class DrawPlusIDE:
             return
 
         try:
-            # Lexer : Générer les tokens
+            # Lexical analysis to generate tokens
             lexer = Lexer(source_code=code)
             tokens = lexer.tokenize()
 
-            # Parser : Générer l'AST
+            # Syntax analysis to generate the AST
             parser = Parser(tokens=tokens)
             ast = parser.parse()
 
-            # Vérifiez les erreurs du parser
+            # Check for parsing errors
             if parser.errors:
                 for error in parser.errors:
-                    # Filtrer les messages qui contiennent "Unexpected token"
-                    if "Unexpected token" not in error:
+                    if "Unexpected token" not in error:  # Filter specific error messages
                         self.display_error(f"{error}")
-                return  # Ne pas continuer si des erreurs de parsing sont présentes
-            # Interpreter : Exécuter l'AST
+                return
+
+            # Interpretation: execute the AST
             interpreter = Interpreter(syntax_tree=ast)
             interpreter.execute()
 
-            # Vérifiez les erreurs de l'interpreter
+            # Check for interpretation errors
             if interpreter.errors:
                 for error in interpreter.errors:
                     self.display_error(f"{error}")
             else:
                 messagebox.showinfo("Success", "Code executed successfully!")
 
-                 # 4) Compilation du code C
-                c_code = compiler.generate_c_code(ast)  # Génération du C
-                compiler.save_to_file("output.c", c_code)
-                compiler.compile_c_to_exe("output.c", "output.exe")
+                # Compile the C code
+                c_code = compiler.generate_c_code(ast)  # Generate C code
+                compiler.save_to_file("output.c", c_code)  # Save to a file
+                compiler.compile_c_to_exe("output.c", "output.exe")  # Compile to an executable
 
-                # 5) (Optionnel) Exécuter l’exécutable
+                # Optionally run the compiled executable
                 import subprocess
-                subprocess.Popen(["./output.exe"])  # Sur Windows, simplement "output.exe" fonctionne
+                subprocess.Popen(["./output.exe"])  # For Windows, just "output.exe" works
 
         except Exception as e:
-            # Si une erreur inattendue survient
+            # Handle unexpected errors
             self.display_error(f"An unexpected error occurred: {e}")
 
-  
+
     def validate_code(self):
-     code = self.text_area.get(1.0, tk.END).strip()
-     if not code:
-         messagebox.showwarning("Warning", "No code to validate!")
-         return
+        """
+        Validates the code in the text area for syntax errors.
+        - Performs lexical and syntax analysis without execution.
+        """
+        code = self.text_area.get(1.0, tk.END).strip()
+        if not code:
+            messagebox.showwarning("Warning", "No code to validate!")
+            return
 
-     try:
-         # Initialisation du Lexer et génération des tokens
-         lexer = Lexer(source_code=code)
-         tokens = lexer.tokenize()
+        try:
+            # Lexical analysis to generate tokens
+            lexer = Lexer(source_code=code)
+            tokens = lexer.tokenize()
 
-         # Initialisation du Parser et analyse syntaxique
-         parser = Parser(tokens=tokens)
-         parser.parse()
+            # Syntax analysis to validate the code
+            parser = Parser(tokens=tokens)
+            parser.parse()
 
-         messagebox.showinfo("Validation", "No errors detected!")
-     except Exception as e:
-         # Gestion et affichage des erreurs
-         messagebox.showerror("Validation Error", f"An error occurred: {e}")
-
+            messagebox.showinfo("Validation", "No errors detected!")
+        except Exception as e:
+            # Handle and display errors
+            messagebox.showerror("Validation Error", f"An error occurred: {e}")
 
 
 if __name__ == "__main__":

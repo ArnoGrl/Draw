@@ -21,27 +21,27 @@ class TestMatchMethod(unittest.TestCase):
 
     def test_match_failure(self):
         """Teste si match retourne False pour un type incorrect."""
-        self.parser.position = 1  # Déplace la position à 'myCursor'
+        self.parser.position = 1 
         self.assertFalse(self.parser.match(TokenType.LBRACE), "Expected match to return False for LBRACE at position 1")
 
     def test_match_out_of_range(self):
         """Teste si match retourne False pour une position hors des limites."""
-        self.parser.position = len(self.tokens)  # Déplace la position hors des limites
+        self.parser.position = len(self.tokens)  
         self.assertFalse(self.parser.match(TokenType.LBRACE), "Expected match to return False for out-of-range position")
 
     def test_match_multiple_types(self):
         """Teste si match fonctionne avec plusieurs types."""
-        self.parser.position = 1  # Déplace la position à 'myCursor'
+        self.parser.position = 1  
         self.assertTrue(
             self.parser.match(TokenType.IDENTIFIER, TokenType.DOT),
             "Expected match to return True for IDENTIFIER or DOT at position 1"
         )
-        self.parser.position = 2  # Déplace la position à '.'
+        self.parser.position = 2  
         self.assertTrue(
             self.parser.match(TokenType.IDENTIFIER, TokenType.DOT),
             "Expected match to return True for IDENTIFIER or DOT at position 2"
         )
-        self.parser.position = 3  # Déplace la position à 'setColor'
+        self.parser.position = 3  
         self.assertFalse(
             self.parser.match(TokenType.IDENTIFIER, TokenType.LBRACE),
             "Expected match to return False for IDENTIFIER or LBRACE at position 3"

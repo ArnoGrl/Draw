@@ -4,28 +4,28 @@
 #include <SDL2/SDL.h>
 #include <math.h>
 
-// Structure du curseur
+// Defines the Cursor structure to track position, color, thickness, and angle
 typedef struct {
-    int x, y;                   // Position
-    SDL_Color color;            // Couleur
-    int thickness;              // Épaisseur
-    double angle;               // Angle en degrés
+    int x, y;                   // Cursor position on screen
+    SDL_Color color;            // Drawing color
+    int thickness;              // Line thickness
+    double angle;               // Cursor angle in degrees
 } Cursor;
 
-// Fonctions de gestion du curseur
-Cursor createCursor();
-void setPosition(Cursor *cursor, int x, int y);
-void setColor(Cursor *cursor, SDL_Color color);
-void setThickness(Cursor *cursor, int thickness);
-void rotate(Cursor *cursor, double angle);
+// Cursor management functions
+Cursor createCursor();                              // Initializes a new cursor
+void setPosition(Cursor *cursor, int x, int y);    // Updates cursor position
+void setColor(Cursor *cursor, SDL_Color color);    // Sets cursor drawing color
+void setThickness(Cursor *cursor, int thickness); // Sets line thickness
+void rotate(Cursor *cursor, double angle);        // Rotates the cursor
 
-// Fonctions de dessin
-void drawSquare(SDL_Renderer *renderer, Cursor *cursor, int size);
-void drawTriangle(SDL_Renderer *renderer, Cursor *cursor, int base, int height);
-void drawRectangle(SDL_Renderer *renderer, Cursor *cursor, int width, int height);
-void drawCircle(SDL_Renderer *renderer, Cursor *cursor, int radius);
-void drawLine(SDL_Renderer *renderer, Cursor *cursor, int length);
-void drawPoint(SDL_Renderer *renderer, Cursor *cursor);
-void drawArc(SDL_Renderer *renderer, Cursor *cursor, int radius, double angle);
+// Drawing functions
+void drawSquare(SDL_Renderer *renderer, Cursor *cursor, int size);    // Draws a square
+void drawTriangle(SDL_Renderer *renderer, Cursor *cursor, int base, int height); // Draws a triangle
+void drawRectangle(SDL_Renderer *renderer, Cursor *cursor, int width, int height); // Draws a rectangle
+void drawCircle(SDL_Renderer *renderer, Cursor *cursor, int radius);  // Draws a circle
+void drawLine(SDL_Renderer *renderer, Cursor *cursor, int length);    // Draws a straight line
+void drawPoint(SDL_Renderer *renderer, Cursor *cursor);               // Draws a single point
+void drawArc(SDL_Renderer *renderer, Cursor *cursor, int radius, double angle); // Draws an arc
 
 #endif // DRAW_CURSOR_H

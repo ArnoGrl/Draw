@@ -4,41 +4,42 @@ from interpreter import Interpreter
 
 def parse_and_interpret(code):
     """
-    Prend un code Draw++, le parse et le transmet à l'interpréteur pour le vérifier.
+    Takes a Draw++ code snippet, parses it, and passes it to the interpreter for execution.
+    Includes detailed debug output for tokens, AST, and errors.
     """
     print("Parsing and interpreting the following code:")
     print(code)
     print("=" * 50)
 
-    # Étape 1 : Tokenize le code
+    # Step 1: Tokenize the code using the Lexer
     lexer = Lexer(code)
     tokens = lexer.tokenize()
     print("Tokens:")
-    for token in tokens:
+    for token in tokens:  # Display each token for debugging purposes
         print(token)
     print("=" * 50)
 
-    # Étape 2 : Parse les tokens pour générer un AST
+    # Step 2: Parse the tokens to generate an Abstract Syntax Tree (AST)
     parser = Parser(tokens)
     syntax_tree = parser.parse()
     print("Generated AST:")
     from pprint import pprint
-    pprint(syntax_tree)
+    pprint(syntax_tree)  # Use pprint for a clearer hierarchical view of the AST
     print("=" * 50)
 
-    # Étape 3 : Vérifie l'AST avec l'interpréteur
+    # Step 3: Execute the AST using the Interpreter
     interpreter = Interpreter(syntax_tree)
     interpreter.execute()
 
-    # Étape 4 : Afficher les erreurs
+    # Step 4: Display any interpreter errors
     if interpreter.errors:
         print("Errors detected:")
         for error in interpreter.errors:
-            print(f" - {error}")
+            print(f" - {error}")  # Print each error for clarity
     else:
-        print("No errors detected!")
+        print("No errors detected!")  # Confirm successful execution if no errors
 
-# Exemple de code à tester
+# Example Draw++ code snippet to test
 code = """
 cursor myCursor;
 myCursor.setPosition(10, 20);
