@@ -59,7 +59,9 @@ Pour lancer l'interpréteur principal :
 python main.py
 ```
 Vous pouvez tester des fichier pré-enregistré en appuyant sur open en haut à gauche de l'IDE.
-Il est possible d'ouvrir un fichier, d'en enregistrer, d'en créer un nouveau
+
+Il est possible d'ouvrir un fichier, d'en enregistrer, d'en créer un nouveau.
+
 Les fichier Draw on l'extension .draw++
 
 ## Fichiers de test
