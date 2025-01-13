@@ -8,7 +8,7 @@ dessiner facilement des formes et de créer des illustrations graphiques.
 
 Le projet comprend une grammaire écrite sous le format .Json, un analyseur lexical et syntaxique, un fichier contenant une liste de "Tokens", ainsi qu'un compilateur et un interpréteur. Il propose également une interface de développement (IDE) pour créer et tester des fichiers `.draw++`. Tout les fichier sont écrits en Python, le compilateur génère un fichier .c, qui est ensuite compiler en un fichier éxécutable : "output.exe".
 
-Pour des raisons de faciliter, nous conseillons fortement d'installer ce logiciel sur Ubuntu.
+Pour des raisons de faciliter, nous vous conseillons fortement d'installer ce logiciel sur Ubuntu.
 ,
 
 ## Objectifs 
