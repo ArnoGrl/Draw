@@ -42,7 +42,7 @@ Pour éviter les conflits de dépendances, il est recommandé de créer un envir
 
 1. Créez l'environnement virtuel :
    ```
-   python -m venv venv
+   python3 -m venv venv
    ```
 
 2. Activez l'environnement virtuel :
