@@ -40,12 +40,17 @@ Draw-master/
 ### Étape 1 : Créer un environnement virtuel
 Pour éviter les conflits de dépendances, il est recommandé de créer un environnement virtuel Python.
 
-1. Créez l'environnement virtuel :
+1. Se déplacer dans le bon dossier, dans le dossier Draw_master qui contient le dossier ProjetDraw
+   ```
+   ~/Desktop/Draw-master/Draw-master
+   ```
+
+2. Créez l'environnement virtuel :
    ```
    python3 -m venv venv
    ```
 
-2. Activez l'environnement virtuel :
+3. Activez l'environnement virtuel :
    - **Sous Windows** :
      ```
      venv\Scripts\activate
